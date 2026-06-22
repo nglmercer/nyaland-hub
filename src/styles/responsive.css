@@ -189,9 +189,12 @@
   .table thead,
   .table tbody,
   .table th,
-  .table td,
-  .table tr {
+  .table td {
     display: block;
+  }
+
+  .table tr {
+    display: grid;
   }
 
   .table thead {
