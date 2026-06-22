@@ -68,7 +68,7 @@ export function App() {
           h(SearchBar, null),
           h(TorrentList, null),
         ),
-        selectedTorrent.value !== null && h("div", { class: "detail-panel" },
+        h("div", { class: `detail-panel${selectedTorrent.value !== null ? " visible" : ""}` },
           h(TorrentDetail, null),
         ),
       ),

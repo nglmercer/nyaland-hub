@@ -686,3 +686,361 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
+
+/* ============================================
+   Mobile Responsive (max-width: 768px)
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Header - stack vertically */
+  .app-header {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .app-title {
+    font-size: 1.1rem;
+    width: 100%;
+  }
+
+  .app-nav {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .nav-btn {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    margin-left: 0;
+  }
+
+  /* Search Layout - single column */
+  .search-layout {
+    flex-direction: column;
+  }
+
+  .search-panel {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .detail-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: var(--bg-primary);
+    overflow-y: auto;
+    display: none;
+  }
+
+  .detail-panel.visible {
+    display: block;
+  }
+
+  /* Search Bar */
+  .search-bar {
+    padding: 12px 16px;
+  }
+
+  .search-row {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .search-input {
+    padding: 12px 16px;
+    font-size: 16px; /* prevents iOS zoom */
+    min-height: 44px;
+  }
+
+  .filter-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filter-select {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+
+  /* Buttons - larger touch targets */
+  .btn {
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+
+  /* Torrent Table - card layout */
+  .torrent-table-wrapper {
+    padding: 8px;
+  }
+
+  .torrent-table,
+  .torrent-table thead,
+  .torrent-table tbody,
+  .torrent-table th,
+  .torrent-table td,
+  .torrent-table tr {
+    display: block;
+  }
+
+  .torrent-table thead {
+    display: none;
+  }
+
+  .torrent-row {
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 8px;
+    border-left: none !important;
+    position: relative;
+  }
+
+  .torrent-row td {
+    padding: 4px 0;
+    border-bottom: none;
+    font-size: 0.85rem;
+  }
+
+  .torrent-name {
+    max-width: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    padding-right: 60px;
+  }
+
+  .torrent-category {
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+
+  .torrent-size,
+  .torrent-date {
+    display: inline-block;
+    margin-right: 12px;
+  }
+
+  .torrent-seeders,
+  .torrent-leechers,
+  .torrent-downloads {
+    display: inline-block;
+    margin-right: 12px;
+    font-size: 0.8rem;
+  }
+
+  .btn-download {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 8px 12px;
+    min-height: 40px;
+    font-size: 0.8rem;
+  }
+
+  /* Pagination */
+  .pagination {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .nav-btn,
+  .pagination .btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  /* Torrent Detail - full screen on mobile */
+  .torrent-detail {
+    padding: 16px;
+  }
+
+  .detail-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    padding: 12px 0;
+    margin-bottom: 12px;
+    z-index: 10;
+  }
+
+  .detail-header h2 {
+    font-size: 1rem;
+    padding-right: 40px;
+  }
+
+  .btn-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+
+  .meta-item {
+    font-size: 0.85rem;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .meta-label {
+    min-width: auto;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .detail-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    gap: 8px;
+    z-index: 20;
+  }
+
+  .btn-download-start {
+    flex: 1;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+
+  .btn-magnet {
+    min-height: 48px;
+    padding: 12px;
+  }
+
+  /* Download Manager */
+  .download-manager {
+    padding: 12px 16px;
+  }
+
+  .download-stats {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .download-stats > span {
+    flex: 1;
+    min-width: calc(50% - 12px);
+  }
+
+  .download-item {
+    padding: 12px;
+  }
+
+  .download-name {
+    font-size: 0.9rem;
+    padding-right: 8px;
+  }
+
+  .download-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .download-actions {
+    justify-content: stretch;
+    gap: 6px;
+  }
+
+  .download-actions .btn {
+    flex: 1;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* Settings */
+  .settings {
+    padding: 16px;
+    max-width: none;
+  }
+
+  .settings h2 {
+    font-size: 1.2rem;
+  }
+
+  .form-group select,
+  .form-group input[type="text"],
+  .form-group input[type="number"] {
+    font-size: 16px; /* prevents iOS zoom */
+    min-height: 44px;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+/* ============================================
+   Small Mobile (max-width: 480px)
+   ============================================ */
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 8px 12px;
+  }
+
+  .app-title {
+    font-size: 1rem;
+  }
+
+  .nav-btn {
+    padding: 8px 8px;
+    font-size: 0.75rem;
+  }
+
+  .search-bar {
+    padding: 10px 12px;
+  }
+
+  .filter-select {
+    min-width: 100%;
+  }
+
+  .torrent-row {
+    padding: 10px;
+  }
+
+  .torrent-name {
+    font-size: 0.9rem;
+  }
+
+  .download-manager {
+    padding: 10px 12px;
+  }
+
+  .download-item {
+    padding: 10px;
+  }
+
+  .settings {
+    padding: 12px;
+  }
+}
