@@ -4,7 +4,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use librqbit::api::TorrentIdOrHash;
-use librqbit::{Api, AddTorrent, AddTorrentOptions, Session, SessionOptions, SessionPersistenceConfig};
+use librqbit::{
+    AddTorrent, AddTorrentOptions, Api, Session, SessionOptions, SessionPersistenceConfig,
+};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
@@ -85,7 +87,10 @@ impl TorrentSession {
 
         match self
             .api
-            .api_add_torrent(AddTorrent::Url(Cow::Owned(magnet.to_string())), Some(add_opts))
+            .api_add_torrent(
+                AddTorrent::Url(Cow::Owned(magnet.to_string())),
+                Some(add_opts),
+            )
             .await
         {
             Ok(resp) => {

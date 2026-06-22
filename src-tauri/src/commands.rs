@@ -11,19 +11,13 @@ pub struct AppState {
 }
 
 #[tauri::command]
-pub async fn search(
-    state: State<'_, AppState>,
-    params: SearchParams,
-) -> Result<String, String> {
+pub async fn search(state: State<'_, AppState>, params: SearchParams) -> Result<String, String> {
     let result = state.nyaa.search(&params).await?;
     serde_json::to_string(&result).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn view_torrent(
-    state: State<'_, AppState>,
-    id: u64,
-) -> Result<String, String> {
+pub async fn view_torrent(state: State<'_, AppState>, id: u64) -> Result<String, String> {
     let detail = state.nyaa.view(id).await?;
     serde_json::to_string(&detail).map_err(|e| e.to_string())
 }
@@ -33,13 +27,14 @@ pub async fn add_download(
     state: State<'_, AppState>,
     params: AddDownloadParams,
 ) -> Result<String, String> {
-    state.torrent.add_download(&params.magnet, &params.save_path).await
+    state
+        .torrent
+        .add_download(&params.magnet, &params.save_path)
+        .await
 }
 
 #[tauri::command]
-pub async fn get_downloads(
-    state: State<'_, AppState>,
-) -> Result<String, String> {
+pub async fn get_downloads(state: State<'_, AppState>) -> Result<String, String> {
     let downloads = state.torrent.get_downloads().await;
     serde_json::to_string(&downloads).map_err(|e| e.to_string())
 }
@@ -65,13 +60,14 @@ pub async fn remove_download(
     state: State<'_, AppState>,
     params: RemoveDownloadParams,
 ) -> Result<bool, String> {
-    state.torrent.remove_download(&params.hash, params.delete_files).await
+    state
+        .torrent
+        .remove_download(&params.hash, params.delete_files)
+        .await
 }
 
 #[tauri::command]
-pub async fn get_settings(
-    state: State<'_, AppState>,
-) -> Result<String, String> {
+pub async fn get_settings(state: State<'_, AppState>) -> Result<String, String> {
     let inner = state.torrent.inner.read().await;
     serde_json::to_string(&inner.settings).map_err(|e| e.to_string())
 }
@@ -107,7 +103,9 @@ pub async fn open_folder(path: String) -> Result<bool, String> {
 #[tauri::command]
 pub async fn detect_media_files(path: String) -> Result<Vec<String>, String> {
     let entries = std::fs::read_dir(&path).map_err(|e| e.to_string())?;
-    let media_exts = ["mkv", "mp4", "avi", "webm", "mov", "flv", "wmv", "m4v", "ts", "rmvb"];
+    let media_exts = [
+        "mkv", "mp4", "avi", "webm", "mov", "flv", "wmv", "m4v", "ts", "rmvb",
+    ];
     let mut files = Vec::new();
 
     for entry in entries.flatten() {

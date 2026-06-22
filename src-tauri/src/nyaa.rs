@@ -1,4 +1,7 @@
-use nyaapi_rs::{Nyaa, NyaaMode, NyaaOptions, SearchOptions, CategoryFilter, TrustedFilter, SortBy, Order, SearchResult, TorrentDetail};
+use nyaapi_rs::{
+    CategoryFilter, Nyaa, NyaaMode, NyaaOptions, Order, SearchOptions, SearchResult, SortBy,
+    TorrentDetail, TrustedFilter,
+};
 
 use crate::types::SearchParams;
 
@@ -16,10 +19,26 @@ impl NyaaClient {
     }
 
     pub async fn search(&self, params: &SearchParams) -> Result<SearchResult, String> {
-        let category = params.category.as_deref().map(parse_category).unwrap_or(CategoryFilter::All);
-        let filter = params.filter.as_deref().map(parse_filter).unwrap_or(TrustedFilter::NoFilter);
-        let sort = params.sort.as_deref().map(parse_sort).unwrap_or(SortBy::Date);
-        let order = params.order.as_deref().map(parse_order).unwrap_or(Order::Desc);
+        let category = params
+            .category
+            .as_deref()
+            .map(parse_category)
+            .unwrap_or(CategoryFilter::All);
+        let filter = params
+            .filter
+            .as_deref()
+            .map(parse_filter)
+            .unwrap_or(TrustedFilter::NoFilter);
+        let sort = params
+            .sort
+            .as_deref()
+            .map(parse_sort)
+            .unwrap_or(SortBy::Date);
+        let order = params
+            .order
+            .as_deref()
+            .map(parse_order)
+            .unwrap_or(Order::Desc);
 
         let options = SearchOptions {
             page: params.page,
@@ -29,7 +48,10 @@ impl NyaaClient {
             order: Some(order),
         };
 
-        self.client.search(&params.query, options).await.map_err(|e| e.to_string())
+        self.client
+            .search(&params.query, options)
+            .await
+            .map_err(|e| e.to_string())
     }
 
     pub async fn view(&self, id: u64) -> Result<Option<TorrentDetail>, String> {
