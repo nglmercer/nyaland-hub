@@ -10,7 +10,7 @@ import {
   completedDownloads,
 } from "../stores/downloads";
 import { t } from "../i18n";
-import { PauseIcon, PlayIcon, TrashIcon } from "./icons";
+import { PauseIcon, PlayIcon, TrashIcon, FolderOpenIcon } from "./icons";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -32,6 +32,27 @@ function stateColor(state: string): string {
     case "Queued": return "state-queued";
     case "Error": return "state-error";
     default: return "";
+  }
+}
+
+async function playFile(path: string) {
+  const { invoke } = await import("@tauri-apps/api/core");
+  try {
+    const files: string[] = await invoke("detect_media_files", { path });
+    if (files.length > 0) {
+      await invoke("play_file", { path: files[0] });
+    }
+  } catch (e) {
+    console.error("Play failed:", e);
+  }
+}
+
+async function openFolder(path: string) {
+  const { invoke } = await import("@tauri-apps/api/core");
+  try {
+    await invoke("open_folder", { path });
+  } catch (e) {
+    console.error("Open folder failed:", e);
   }
 }
 
@@ -95,9 +116,24 @@ export function DownloadManager() {
                 h("div", { class: "download-name" }, d.name),
                 h("div", { class: "download-meta" },
                   h("span", null, `${formatBytes(d.total_size)} - ${tx.downloadComplete}`),
+                  h("span", null, d.save_path),
                 ),
               ),
               h("div", { class: "download-actions" },
+                h("button", {
+                  class: "btn btn-small btn-primary",
+                  onClick: () => playFile(d.save_path),
+                },
+                  h(PlayIcon, { size: 14 }),
+                  tx.btnPlay,
+                ),
+                h("button", {
+                  class: "btn btn-small",
+                  onClick: () => openFolder(d.save_path),
+                },
+                  h(FolderOpenIcon, { size: 14 }),
+                  tx.btnOpenFolder,
+                ),
                 h("button", {
                   class: "btn btn-small btn-danger",
                   onClick: () => removeDownload(d.hash, false),

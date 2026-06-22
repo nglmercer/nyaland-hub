@@ -225,3 +225,20 @@ export function MoonIcon({ size = 16, class: cls }: IconProps) {
     h("path", { d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" }),
   );
 }
+
+export function FolderOpenIcon({ size = 16, class: cls }: IconProps) {
+  return h("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": 2,
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    class: cls,
+  },
+    h("path", { d: "M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" }),
+    h("line", { x1: 2, y1: 10, x2: 22, y2: 10 }),
+  );
+}

@@ -1,3 +1,4 @@
+use std::process::Command as StdCommand;
 use tauri::State;
 
 use crate::nyaa::NyaaClient;
@@ -83,4 +84,40 @@ pub async fn save_settings(
     let mut inner = state.torrent.inner.write().await;
     inner.settings = settings;
     Ok(true)
+}
+
+#[tauri::command]
+pub async fn play_file(path: String) -> Result<bool, String> {
+    std::thread::spawn(move || {
+        let _ = StdCommand::new("mpv")
+            .args(["--no-terminal", "--keep-open", &path])
+            .spawn();
+    });
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn open_folder(path: String) -> Result<bool, String> {
+    std::thread::spawn(move || {
+        let _ = StdCommand::new("xdg-open").arg(&path).spawn();
+    });
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn detect_media_files(path: String) -> Result<Vec<String>, String> {
+    let entries = std::fs::read_dir(&path).map_err(|e| e.to_string())?;
+    let media_exts = ["mkv", "mp4", "avi", "webm", "mov", "flv", "wmv", "m4v", "ts", "rmvb"];
+    let mut files = Vec::new();
+
+    for entry in entries.flatten() {
+        if let Some(ext) = entry.path().extension().and_then(|e| e.to_str()) {
+            if media_exts.iter().any(|e| ext.eq_ignore_ascii_case(e)) {
+                files.push(entry.path().to_string_lossy().to_string());
+            }
+        }
+    }
+
+    files.sort();
+    Ok(files)
 }

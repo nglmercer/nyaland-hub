@@ -68,8 +68,12 @@ export type TranslationKeys = {
   btnPause: string;
   btnResume: string;
   btnRemove: string;
+  btnPlay: string;
+  btnPlayFile: string;
+  btnOpenFolder: string;
   downloadComplete: string;
   downloadEmpty: string;
+  noMediaFiles: string;
 
   // Settings
   settingsTitle: string;
@@ -151,8 +155,12 @@ const en: TranslationKeys = {
   btnPause: "Pause",
   btnResume: "Resume",
   btnRemove: "Remove",
+  btnPlay: "Play",
+  btnPlayFile: "Play File",
+  btnOpenFolder: "Open Folder",
   downloadComplete: "Complete",
   downloadEmpty: "No active downloads",
+  noMediaFiles: "No media files found",
 
   settingsTitle: "Settings",
   settingsDownloadPath: "Download Path",
@@ -233,8 +241,12 @@ const es: TranslationKeys = {
   btnPause: "Pausar",
   btnResume: "Reanudar",
   btnRemove: "Eliminar",
+  btnPlay: "Reproducir",
+  btnPlayFile: "Reproducir Archivo",
+  btnOpenFolder: "Abrir Carpeta",
   downloadComplete: "Completado",
   downloadEmpty: "No hay descargas activas",
+  noMediaFiles: "No se encontraron archivos multimedia",
 
   settingsTitle: "Ajustes",
   settingsDownloadPath: "Ruta de Descarga",

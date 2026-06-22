@@ -29,6 +29,9 @@ pub async fn run() {
             commands::remove_download,
             commands::get_settings,
             commands::save_settings,
+            commands::play_file,
+            commands::open_folder,
+            commands::detect_media_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

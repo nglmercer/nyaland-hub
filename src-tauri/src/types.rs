@@ -59,7 +59,7 @@ impl Default for AppSettings {
     fn default() -> Self {
         let save_path = dirs::download_dir()
             .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join("nyaland");
+            .join("Nyaland");
 
         Self {
             save_path: save_path.to_string_lossy().to_string(),

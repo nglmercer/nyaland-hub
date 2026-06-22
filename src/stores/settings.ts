@@ -2,7 +2,7 @@ import { signal } from "@preact/signals";
 import type { AppSettings } from "../types";
 
 export const settings = signal<AppSettings>({
-  save_path: "~/Downloads/nyaland",
+  save_path: "~/Downloads/Nyaland",
   nyaa_base_url: "https://nyaa.si",
   max_download_speed: 0,
   max_upload_speed: 0,

@@ -542,6 +542,19 @@ body {
   border-left-color: var(--red);
 }
 
+.download-item.state-queued {
+  border-left-color: var(--text-secondary);
+}
+
+.download-info .download-meta .download-path {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
 .download-info {
   margin-bottom: 8px;
 }
