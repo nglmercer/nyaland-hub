@@ -83,6 +83,9 @@ export type TranslationKeys = {
   btnSave: string;
   settingsSaved: string;
   settingsLanguage: string;
+  settingsTheme: string;
+  themeDark: string;
+  themeLight: string;
 };
 
 const en: TranslationKeys = {
@@ -162,6 +165,9 @@ const en: TranslationKeys = {
   btnSave: "Save Settings",
   settingsSaved: "Saved!",
   settingsLanguage: "Language",
+  settingsTheme: "Theme",
+  themeDark: "Dark theme",
+  themeLight: "Light theme",
 };
 
 const es: TranslationKeys = {
@@ -241,6 +247,9 @@ const es: TranslationKeys = {
   btnSave: "Guardar Ajustes",
   settingsSaved: "Guardado!",
   settingsLanguage: "Idioma",
+  settingsTheme: "Tema",
+  themeDark: "Tema oscuro",
+  themeLight: "Tema claro",
 };
 
 export const translations: Record<Locale, TranslationKeys> = { en, es };

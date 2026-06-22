@@ -3,11 +3,13 @@ import { useSignal } from "@preact/signals";
 import { settings, saveSettings } from "../stores/settings";
 import { t, setLocale, locale } from "../i18n";
 import type { Locale } from "../i18n/translations";
-import { GlobeIcon } from "./icons";
+import { GlobeIcon, SunIcon, MoonIcon } from "./icons";
+import { theme, setTheme, isDark, type Theme } from "../stores/theme";
 
 export function Settings() {
   const localSettings = useSignal({ ...settings.value });
   const localLocale = useSignal(locale.value);
+  const localTheme = useSignal(theme.value);
   const saved = useSignal(false);
 
   const tx = t.value;
@@ -15,6 +17,7 @@ export function Settings() {
   const handleSave = async () => {
     await saveSettings(localSettings.value);
     setLocale(localLocale.value);
+    setTheme(localTheme.value);
     saved.value = true;
     setTimeout(() => { saved.value = false; }, 2000);
   };
@@ -40,6 +43,22 @@ export function Settings() {
         },
           h("option", { value: "en" }, "English"),
           h("option", { value: "es" }, "Espanol"),
+        ),
+      ),
+      h("div", { class: "form-group" },
+        h("label", null,
+          isDark.value ? h(SunIcon, { size: 14 }) : h(MoonIcon, { size: 14 }),
+          tx.settingsTheme,
+        ),
+        h("select", {
+          class: "filter-select",
+          value: localTheme.value,
+          onChange: (e: Event) => {
+            localTheme.value = (e.target as HTMLSelectElement).value as Theme;
+          },
+        },
+          h("option", { value: "dark" }, tx.themeDark),
+          h("option", { value: "light" }, tx.themeLight),
         ),
       ),
       h("div", { class: "form-group" },

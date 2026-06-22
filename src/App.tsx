@@ -5,11 +5,12 @@ import { TorrentList } from "./components/TorrentList";
 import { TorrentDetail } from "./components/TorrentDetail";
 import { DownloadManager } from "./components/DownloadManager";
 import { Settings } from "./components/Settings";
-import { SearchIcon, DownloadIcon, SettingsIcon } from "./components/icons";
+import { SearchIcon, DownloadIcon, SettingsIcon, SunIcon, MoonIcon } from "./components/icons";
 import { startPolling, stopPolling } from "./stores/downloads";
 import { selectedTorrent } from "./stores/search";
 import { loadSettings } from "./stores/settings";
 import { t } from "./i18n";
+import { theme, toggleTheme, isDark } from "./stores/theme";
 
 type Tab = "search" | "downloads" | "settings";
 
@@ -51,6 +52,13 @@ export function App() {
         },
           h(SettingsIcon, { size: 16 }),
           h("span", null, t.value.navSettings),
+        ),
+        h("button", {
+          class: "theme-toggle",
+          onClick: toggleTheme,
+          title: isDark.value ? t.value.themeLight : t.value.themeDark,
+        },
+          isDark.value ? h(SunIcon, { size: 16 }) : h(MoonIcon, { size: 16 }),
         ),
       ),
     ),
