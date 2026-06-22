@@ -258,6 +258,24 @@ export function ChevronDownIcon({ size = 16, class: cls }: IconProps) {
   );
 }
 
+export function HamburgerIcon({ size = 18, class: cls }: IconProps) {
+  return h("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": 2,
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    class: cls,
+  },
+    h("line", { x1: 3, y1: 6, x2: 21, y2: 6 }),
+    h("line", { x1: 3, y1: 12, x2: 21, y2: 12 }),
+    h("line", { x1: 3, y1: 18, x2: 21, y2: 18 }),
+  );
+}
+
 export function FolderOpenIcon({ size = 16, class: cls }: IconProps) {
   return h("svg", {
     width: size,

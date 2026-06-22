@@ -1,5 +1,6 @@
 import { h } from "preact";
 import { useSignal } from "@preact/signals";
+import { marked } from "marked";
 import {
   selectedTorrent,
   detailLoading,
@@ -9,6 +10,15 @@ import { addDownload } from "../stores/downloads";
 import { settings } from "../stores/settings";
 import { t } from "../i18n";
 import { CloseIcon, MagnetIcon } from "./icons";
+
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+function renderMarkdown(text: string): string {
+  return marked.parse(text) as string;
+}
 
 export function TorrentDetail() {
   const addingDownload = useSignal(false);
@@ -49,31 +59,33 @@ export function TorrentDetail() {
     h("div", { class: "detail-meta" },
       h("div", { class: "meta-item" },
         h("span", { class: "meta-label" }, tx.detailCategory),
-        h("span", null, `${torrent.category} / ${torrent.sub_category}`),
+        h("span", { class: "meta-value badge" }, `${torrent.category} / ${torrent.sub_category}`),
       ),
       h("div", { class: "meta-item" },
         h("span", { class: "meta-label" }, tx.detailSize),
-        h("span", null, torrent.size),
+        h("span", { class: "meta-value" }, torrent.size),
       ),
       h("div", { class: "meta-item" },
         h("span", { class: "meta-label" }, tx.detailDate),
-        h("span", null, torrent.date),
+        h("span", { class: "meta-value" }, torrent.date),
       ),
-      h("div", { class: "meta-item" },
-        h("span", { class: "meta-label" }, tx.detailSeeders),
-        h("span", { class: "text-success" }, String(torrent.seeders)),
-      ),
-      h("div", { class: "meta-item" },
-        h("span", { class: "meta-label" }, tx.detailLeechers),
-        h("span", null, String(torrent.leechers)),
-      ),
-      h("div", { class: "meta-item" },
-        h("span", { class: "meta-label" }, tx.detailDownloads),
-        h("span", null, String(torrent.downloads)),
+      h("div", { class: "meta-grid" },
+        h("div", { class: "meta-stat" },
+          h("span", { class: "meta-stat-value text-success" }, String(torrent.seeders)),
+          h("span", { class: "meta-stat-label" }, tx.detailSeeders),
+        ),
+        h("div", { class: "meta-stat" },
+          h("span", { class: "meta-stat-value text-error" }, String(torrent.leechers)),
+          h("span", { class: "meta-stat-label" }, tx.detailLeechers),
+        ),
+        h("div", { class: "meta-stat" },
+          h("span", { class: "meta-stat-value" }, String(torrent.downloads)),
+          h("span", { class: "meta-stat-label" }, tx.detailDownloads),
+        ),
       ),
       h("div", { class: "meta-item" },
         h("span", { class: "meta-label" }, tx.detailSubmitter),
-        h("span", null, torrent.submitter || tx.detailAnonymous),
+        h("span", { class: "meta-value" }, torrent.submitter || tx.detailAnonymous),
       ),
     ),
     torrent.files.length > 0
@@ -92,7 +104,10 @@ export function TorrentDetail() {
     torrent.description
       ? h("div", { class: "detail-description" },
           h("h3", null, tx.detailDescription),
-          h("pre", { class: "description-text" }, torrent.description),
+          h("div", {
+            class: "description-text markdown-body",
+            dangerouslySetInnerHTML: { __html: renderMarkdown(torrent.description) },
+          }),
         )
       : null,
     h("div", { class: "detail-actions" },

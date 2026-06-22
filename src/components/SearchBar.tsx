@@ -1,26 +1,16 @@
 import { h } from "preact";
 import { useSignal } from "@preact/signals";
 import {
-  searchQuery,
   searchCategory,
   searchFilter,
   searchSort,
   searchOrder,
-  performSearch,
-  searchLoading,
 } from "../stores/search";
 import { FilterIcon, ChevronDownIcon } from "./icons";
 import { t } from "../i18n";
 
 export function SearchBar() {
-  const localQuery = useSignal(searchQuery.value);
   const filtersOpen = useSignal(false);
-
-  const handleSubmit = (e: Event) => {
-    e.preventDefault();
-    searchQuery.value = localQuery.value;
-    performSearch();
-  };
 
   const tx = t.value;
 
@@ -49,31 +39,15 @@ export function SearchBar() {
     { value: "no remakes", label: tx.filterNoRemakes },
   ];
 
-  return h("form", { class: "search-bar", onSubmit: handleSubmit },
-    h("div", { class: "search-row" },
-      h("input", {
-        type: "text",
-        class: "input",
-        placeholder: tx.searchPlaceholder,
-        value: localQuery.value,
-        onInput: (e: Event) => {
-          localQuery.value = (e.target as HTMLInputElement).value;
-        },
-      }),
-      h("button", {
-        type: "button",
-        class: `btn btn-sm ${filtersOpen.value ? "btn-active" : ""}`,
-        onClick: () => { filtersOpen.value = !filtersOpen.value; },
-      },
-        h(FilterIcon, { size: 14 }),
-        tx.btnFilters,
-        h(ChevronDownIcon, { size: 12, class: `filter-chevron${filtersOpen.value ? " open" : ""}` }),
-      ),
-      h("button", {
-        type: "submit",
-        class: "btn btn-primary",
-        disabled: searchLoading.value,
-      }, searchLoading.value ? tx.searching : tx.searchButton),
+  return h("div", { class: "search-bar" },
+    h("button", {
+      type: "button",
+      class: `btn btn-sm ${filtersOpen.value ? "btn-active" : ""}`,
+      onClick: () => { filtersOpen.value = !filtersOpen.value; },
+    },
+      h(FilterIcon, { size: 14 }),
+      tx.btnFilters,
+      h(ChevronDownIcon, { size: 12, class: `filter-chevron${filtersOpen.value ? " open" : ""}` }),
     ),
     h("div", { class: `filter-row${filtersOpen.value ? " open" : ""}` },
       h("select", {

@@ -11,18 +11,11 @@
 }
 
 .search-bar {
-  padding: 16px 24px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--border);
-}
-
-.search-row {
   display: flex;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 0;
-}
-
-.search-row .input {
-  flex: 1;
 }
 
 .filter-chevron {
@@ -47,16 +40,12 @@
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.25s ease;
-  margin-top: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+  padding: 0;
 }
 
 .filter-row.open {
   max-height: 200px;
   opacity: 1;
-  margin-top: 12px;
-}
-
-.filter .select {
-  flex: 1;
+  padding: 8px 0;
 }

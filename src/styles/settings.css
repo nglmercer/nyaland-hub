@@ -1,18 +1,18 @@
 .settings {
-  padding: 24px;
-  max-width: 600px;
+    padding: 24px;
+    max-width: 600px;
 }
 
 .settings h2 {
-  margin-bottom: 24px;
+    margin-bottom: 24px;
 }
 
 .settings-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .form-actions {
-  margin-top: 8px;
+    margin-top: 8px;
 }
