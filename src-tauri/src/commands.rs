@@ -94,9 +94,7 @@ pub async fn play_file(path: String) -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn open_folder(path: String) -> Result<bool, String> {
-    std::thread::spawn(move || {
-        let _ = StdCommand::new("xdg-open").arg(&path).spawn();
-    });
+    opener::open(&path).map_err(|e| e.to_string())?;
     Ok(true)
 }
 

@@ -26,3 +26,4 @@ urlencoding = "2"
 librqbit = { version = "9.0.0-rc.0", default-features = false, features = ["rust-tls", "http-api-client"] }
 anyhow = "1"
 futures = "0.3"
+opener = "0.7"
