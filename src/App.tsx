@@ -1,4 +1,5 @@
 import { h } from "preact";
+import { useEffect } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import { SearchBar } from "./components/SearchBar";
 import { TorrentList } from "./components/TorrentList";
@@ -7,7 +8,7 @@ import { DownloadManager } from "./components/DownloadManager";
 import { Settings } from "./components/Settings";
 import { SearchIcon, DownloadIcon, SettingsIcon, SunIcon, MoonIcon } from "./components/icons";
 import { startPolling, stopPolling } from "./stores/downloads";
-import { selectedTorrent } from "./stores/search";
+import { selectedTorrent, performSearch } from "./stores/search";
 import { loadSettings } from "./stores/settings";
 import { t } from "./i18n";
 import { theme, toggleTheme, isDark } from "./stores/theme";
@@ -16,6 +17,10 @@ type Tab = "search" | "downloads" | "settings";
 
 export function App() {
   const activeTab = useSignal<Tab>("search");
+
+  useEffect(() => {
+    performSearch();
+  }, []);
 
   const switchTab = (tab: Tab) => {
     activeTab.value = tab;

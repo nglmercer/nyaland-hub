@@ -28,6 +28,7 @@ export type TranslationKeys = {
   sortSize: string;
   orderDesc: string;
   orderAsc: string;
+  btnFilters: string;
 
   // Torrent list
   colName: string;
@@ -118,6 +119,7 @@ const en: TranslationKeys = {
   sortSize: "Size",
   orderDesc: "Descending",
   orderAsc: "Ascending",
+  btnFilters: "Filters",
 
   colName: "Name",
   colSize: "Size",
@@ -204,6 +206,7 @@ const es: TranslationKeys = {
   sortSize: "Tamano",
   orderDesc: "Descendente",
   orderAsc: "Ascendente",
+  btnFilters: "Filtros",
 
   colName: "Nombre",
   colSize: "Tamano",

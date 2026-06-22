@@ -17,17 +17,44 @@
 
 .search-row {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 0;
 }
 
-.search .input {
+.search-row .input {
   flex: 1;
 }
 
+.filter-chevron {
+  transition: transform 0.2s;
+  margin-left: 2px;
+}
+
+.filter-chevron.open {
+  transform: rotate(180deg);
+}
+
+.btn-active {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
 .filter-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.25s ease;
+  margin-top: 0;
+}
+
+.filter-row.open {
+  max-height: 200px;
+  opacity: 1;
+  margin-top: 12px;
 }
 
 .filter .select {

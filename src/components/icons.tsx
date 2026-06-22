@@ -226,6 +226,38 @@ export function MoonIcon({ size = 16, class: cls }: IconProps) {
   );
 }
 
+export function FilterIcon({ size = 16, class: cls }: IconProps) {
+  return h("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": 2,
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    class: cls,
+  },
+    h("polygon", { points: "22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" }),
+  );
+}
+
+export function ChevronDownIcon({ size = 16, class: cls }: IconProps) {
+  return h("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": 2,
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    class: cls,
+  },
+    h("polyline", { points: "6 9 12 15 18 9" }),
+  );
+}
+
 export function FolderOpenIcon({ size = 16, class: cls }: IconProps) {
   return h("svg", {
     width: size,

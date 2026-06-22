@@ -9,10 +9,12 @@ import {
   performSearch,
   searchLoading,
 } from "../stores/search";
+import { FilterIcon, ChevronDownIcon } from "./icons";
 import { t } from "../i18n";
 
 export function SearchBar() {
   const localQuery = useSignal(searchQuery.value);
+  const filtersOpen = useSignal(false);
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
@@ -59,12 +61,21 @@ export function SearchBar() {
         },
       }),
       h("button", {
+        type: "button",
+        class: `btn btn-sm ${filtersOpen.value ? "btn-active" : ""}`,
+        onClick: () => { filtersOpen.value = !filtersOpen.value; },
+      },
+        h(FilterIcon, { size: 14 }),
+        tx.btnFilters,
+        h(ChevronDownIcon, { size: 12, class: `filter-chevron${filtersOpen.value ? " open" : ""}` }),
+      ),
+      h("button", {
         type: "submit",
         class: "btn btn-primary",
         disabled: searchLoading.value,
       }, searchLoading.value ? tx.searching : tx.searchButton),
     ),
-    h("div", { class: "filter-row" },
+    h("div", { class: `filter-row${filtersOpen.value ? " open" : ""}` },
       h("select", {
         class: "select",
         value: searchCategory.value,
