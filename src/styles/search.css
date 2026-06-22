@@ -1,0 +1,35 @@
+.search-layout {
+  display: flex;
+  height: 100%;
+}
+
+.search-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-bar {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.search .input {
+  flex: 1;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+}
+
+.filter .select {
+  flex: 1;
+}

@@ -35,7 +35,7 @@ export function Settings() {
           tx.settingsLanguage,
         ),
         h("select", {
-          class: "filter-select",
+          class: "select",
           value: localLocale.value,
           onChange: (e: Event) => {
             localLocale.value = (e.target as HTMLSelectElement).value as Locale;
@@ -51,7 +51,7 @@ export function Settings() {
           tx.settingsTheme,
         ),
         h("select", {
-          class: "filter-select",
+          class: "select",
           value: localTheme.value,
           onChange: (e: Event) => {
             localTheme.value = (e.target as HTMLSelectElement).value as Theme;
@@ -64,6 +64,7 @@ export function Settings() {
       h("div", { class: "form-group" },
         h("label", null, tx.settingsDownloadPath),
         h("input", {
+          class: "input",
           type: "text",
           value: localSettings.value.save_path,
           onInput: (e: Event) => update("save_path", (e.target as HTMLInputElement).value),
@@ -72,6 +73,7 @@ export function Settings() {
       h("div", { class: "form-group" },
         h("label", null, tx.settingsNyaaUrl),
         h("input", {
+          class: "input",
           type: "text",
           value: localSettings.value.nyaa_base_url,
           onInput: (e: Event) => update("nyaa_base_url", (e.target as HTMLInputElement).value),
@@ -80,6 +82,7 @@ export function Settings() {
       h("div", { class: "form-group" },
         h("label", null, tx.settingsMaxDown),
         h("input", {
+          class: "input",
           type: "number",
           value: String(localSettings.value.max_download_speed),
           onInput: (e: Event) => update("max_download_speed", Number((e.target as HTMLInputElement).value)),
@@ -88,6 +91,7 @@ export function Settings() {
       h("div", { class: "form-group" },
         h("label", null, tx.settingsMaxUp),
         h("input", {
+          class: "input",
           type: "number",
           value: String(localSettings.value.max_upload_speed),
           onInput: (e: Event) => update("max_upload_speed", Number((e.target as HTMLInputElement).value)),
@@ -96,6 +100,7 @@ export function Settings() {
       h("div", { class: "form-group" },
         h("label", null, tx.settingsMaxConn),
         h("input", {
+          class: "input",
           type: "number",
           value: String(localSettings.value.max_connections),
           onInput: (e: Event) => update("max_connections", Number((e.target as HTMLInputElement).value)),
@@ -104,6 +109,7 @@ export function Settings() {
       h("div", { class: "form-group" },
         h("label", null, tx.settingsMaxActive),
         h("input", {
+          class: "input",
           type: "number",
           value: String(localSettings.value.max_active_downloads),
           onInput: (e: Event) => update("max_active_downloads", Number((e.target as HTMLInputElement).value)),

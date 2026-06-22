@@ -16,14 +16,14 @@ export function TorrentDetail() {
   const tx = t.value;
 
   if (detailLoading.value) {
-    return h("div", { class: "torrent-detail loading" },
+    return h("div", { class: "drawer-content loading" },
       h("p", null, tx.loadingDetails),
     );
   }
 
   const torrent = detail.value;
   if (!torrent) {
-    return h("div", { class: "torrent-detail empty" },
+    return h("div", { class: "drawer-content empty" },
       h("p", null, tx.selectTorrent),
     );
   }
@@ -38,10 +38,10 @@ export function TorrentDetail() {
     }
   };
 
-  return h("div", { class: "torrent-detail" },
-    h("div", { class: "detail-header" },
+  return h("div", { class: "drawer-content" },
+    h("div", { class: "drawer-header" },
       h("button", {
-        class: "btn btn-small btn-close",
+        class: "btn btn-sm btn-close",
         onClick: () => { selectedTorrent.value = null; },
       }, h(CloseIcon, { size: 14 })),
       h("h2", null, torrent.title),
@@ -61,7 +61,7 @@ export function TorrentDetail() {
       ),
       h("div", { class: "meta-item" },
         h("span", { class: "meta-label" }, tx.detailSeeders),
-        h("span", { class: "seeders-high" }, String(torrent.seeders)),
+        h("span", { class: "text-success" }, String(torrent.seeders)),
       ),
       h("div", { class: "meta-item" },
         h("span", { class: "meta-label" }, tx.detailLeechers),

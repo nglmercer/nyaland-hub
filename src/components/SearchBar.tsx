@@ -51,7 +51,7 @@ export function SearchBar() {
     h("div", { class: "search-row" },
       h("input", {
         type: "text",
-        class: "search-input",
+        class: "input",
         placeholder: tx.searchPlaceholder,
         value: localQuery.value,
         onInput: (e: Event) => {
@@ -66,7 +66,7 @@ export function SearchBar() {
     ),
     h("div", { class: "filter-row" },
       h("select", {
-        class: "filter-select",
+        class: "select",
         value: searchCategory.value,
         onChange: (e: Event) => {
           searchCategory.value = (e.target as HTMLSelectElement).value;
@@ -75,7 +75,7 @@ export function SearchBar() {
         h("option", { value: c.value }, c.label)
       )),
       h("select", {
-        class: "filter-select",
+        class: "select",
         value: searchFilter.value,
         onChange: (e: Event) => {
           searchFilter.value = (e.target as HTMLSelectElement).value;
@@ -84,7 +84,7 @@ export function SearchBar() {
         h("option", { value: f.value }, f.label)
       )),
       h("select", {
-        class: "filter-select",
+        class: "select",
         value: searchSort.value,
         onChange: (e: Event) => {
           searchSort.value = (e.target as HTMLSelectElement).value;
@@ -93,7 +93,7 @@ export function SearchBar() {
         h("option", { value: s.value }, s.label)
       )),
       h("select", {
-        class: "filter-select",
+        class: "select",
         value: searchOrder.value,
         onChange: (e: Event) => {
           searchOrder.value = (e.target as HTMLSelectElement).value;

@@ -26,11 +26,11 @@ function formatSpeed(bytesPerSec: number): string {
 
 function stateColor(state: string): string {
   switch (state) {
-    case "Downloading": return "state-downloading";
-    case "Paused": return "state-paused";
-    case "Finished": return "state-finished";
-    case "Queued": return "state-queued";
-    case "Error": return "state-error";
+    case "Downloading": return "is-downloading";
+    case "Paused": return "is-paused";
+    case "Finished": return "is-finished";
+    case "Queued": return "is-queued";
+    case "Error": return "is-error";
     default: return "";
   }
 }
@@ -79,7 +79,7 @@ export function DownloadManager() {
                   h("span", null, `${tx.downloadUp} ${formatSpeed(d.upload_rate)}`),
                 ),
               ),
-              h("div", { class: "download-progress" },
+              h("div", { class: "progress" },
                 h("div", {
                   class: "progress-bar",
                   style: { width: `${Math.round(d.progress * 100)}%` },
@@ -88,21 +88,21 @@ export function DownloadManager() {
               h("div", { class: "download-actions" },
                 d.state === "Downloading"
                   ? h("button", {
-                      class: "btn btn-small",
+                      class: "btn btn-sm",
                       onClick: () => pauseDownload(d.hash),
                     },
                       h(PauseIcon, { size: 14 }),
                       tx.btnPause,
                     )
                   : h("button", {
-                      class: "btn btn-small",
+                      class: "btn btn-sm",
                       onClick: () => resumeDownload(d.hash),
                     },
                       h(PlayIcon, { size: 14 }),
                       tx.btnResume,
                     ),
                 h("button", {
-                  class: "btn btn-small btn-danger",
+                  class: "btn btn-sm btn-error",
                   onClick: () => removeDownload(d.hash, false),
                 },
                   h(TrashIcon, { size: 14 }),
@@ -111,7 +111,7 @@ export function DownloadManager() {
             )
           ),
           ...completedDownloads.value.map((d) =>
-            h("div", { key: d.hash, class: "download-item state-finished" },
+            h("div", { key: d.hash, class: "download-item is-finished" },
               h("div", { class: "download-info" },
                 h("div", { class: "download-name" }, d.name),
                 h("div", { class: "download-meta" },
@@ -121,21 +121,21 @@ export function DownloadManager() {
               ),
               h("div", { class: "download-actions" },
                 h("button", {
-                  class: "btn btn-small btn-primary",
+                  class: "btn btn-sm btn-primary",
                   onClick: () => playFile(d.save_path),
                 },
                   h(PlayIcon, { size: 14 }),
                   tx.btnPlay,
                 ),
                 h("button", {
-                  class: "btn btn-small",
+                  class: "btn btn-sm",
                   onClick: () => openFolder(d.save_path),
                 },
                   h(FolderOpenIcon, { size: 14 }),
                   tx.btnOpenFolder,
                 ),
                 h("button", {
-                  class: "btn btn-small btn-danger",
+                  class: "btn btn-sm btn-error",
                   onClick: () => removeDownload(d.hash, false),
                 },
                   h(TrashIcon, { size: 14 }),

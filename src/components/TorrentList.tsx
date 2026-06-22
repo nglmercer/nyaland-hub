@@ -20,9 +20,9 @@ function formatDate(dateStr: string): string {
 }
 
 function seederClass(seeders: number): string {
-  if (seeders > 50) return "seeders-high";
-  if (seeders > 10) return "seeders-medium";
-  return "seeders-low";
+  if (seeders > 50) return "text-success";
+  if (seeders > 10) return "text-warning";
+  return "text-secondary";
 }
 
 export function TorrentList() {
@@ -35,8 +35,8 @@ export function TorrentList() {
 
   return h("div", { class: "torrent-list" },
     hasResults.value
-      ? h("div", { class: "torrent-table-wrapper" },
-          h("table", { class: "torrent-table" },
+      ? h("div", { class: "table-wrapper" },
+          h("table", { class: "table table-hover table-pin-rows" },
             h("thead", null,
               h("tr", null,
                 h("th", null, tx.colName),
@@ -52,11 +52,11 @@ export function TorrentList() {
               searchResults.value.map((t) =>
                 h("tr", {
                   key: t.id,
-                  class: "torrent-row",
+                  class: "table-row",
                   onClick: () => viewTorrent(t.id),
                 },
                   h("td", { class: "torrent-name" },
-                    h("span", { class: "torrent-category" }, t.category),
+                    h("span", { class: "badge" }, t.category),
                     t.name,
                   ),
                   h("td", { class: "torrent-size" }, t.size),
@@ -68,7 +68,7 @@ export function TorrentList() {
                   h("td", { class: "torrent-date" }, formatDate(t.date)),
                   h("td", null,
                     h("button", {
-                      class: "btn btn-small btn-download",
+                      class: "btn btn-sm btn-primary",
                       onClick: (e: Event) => {
                         e.stopPropagation();
                         viewTorrent(t.id);
@@ -82,7 +82,7 @@ export function TorrentList() {
           h("div", { class: "pagination" },
             searchPage.value > 1 &&
               h("button", {
-                class: "btn btn-small",
+                class: "btn btn-sm",
                 onClick: () => goToPage(searchPage.value - 1),
               },
                 h(ChevronLeftIcon, { size: 14 }),
@@ -93,7 +93,7 @@ export function TorrentList() {
             ),
             searchTotalPages.value && searchPage.value < searchTotalPages.value
               ? h("button", {
-                  class: "btn btn-small",
+                  class: "btn btn-sm",
                   onClick: () => goToPage(searchPage.value + 1),
                 },
                   tx.paginationNext,
