@@ -71,8 +71,8 @@ pub async fn remove_download(
 pub async fn get_settings(
     state: State<'_, AppState>,
 ) -> Result<String, String> {
-    let settings = state.torrent.settings.read().await;
-    serde_json::to_string(&*settings).map_err(|e| e.to_string())
+    let inner = state.torrent.inner.read().await;
+    serde_json::to_string(&inner.settings).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -80,15 +80,7 @@ pub async fn save_settings(
     state: State<'_, AppState>,
     settings: AppSettings,
 ) -> Result<bool, String> {
-    let mut current = state.torrent.settings.write().await;
-    *current = settings;
+    let mut inner = state.torrent.inner.write().await;
+    inner.settings = settings;
     Ok(true)
-}
-
-#[tauri::command]
-pub async fn simulate_progress(
-    state: State<'_, AppState>,
-) -> Result<(), String> {
-    state.torrent.simulate_progress().await;
-    Ok(())
 }

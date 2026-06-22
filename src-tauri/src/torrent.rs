@@ -1,6 +1,10 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 
+use librqbit::api::TorrentIdOrHash;
+use librqbit::{Api, AddTorrent, AddTorrentOptions, Session, SessionOptions, SessionPersistenceConfig};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
@@ -9,6 +13,7 @@ use crate::types::AppSettings;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DownloadState {
     Queued,
+    Connecting,
     Downloading,
     Paused,
     Finished,
@@ -18,6 +23,7 @@ pub enum DownloadState {
 
 pub struct TorrentHandle {
     pub name: String,
+    pub torrent_id: Option<usize>,
     pub progress: f32,
     pub download_rate: u64,
     pub upload_rate: u64,
@@ -28,48 +34,160 @@ pub struct TorrentHandle {
     pub save_path: String,
     pub added_date: String,
     pub magnet: String,
+    pub error: Option<String>,
+}
+
+pub struct TorrentSessionInner {
+    pub downloads: HashMap<String, TorrentHandle>,
+    pub settings: AppSettings,
 }
 
 #[derive(Clone)]
 pub struct TorrentSession {
-    pub downloads: Arc<RwLock<HashMap<String, TorrentHandle>>>,
-    pub settings: Arc<RwLock<AppSettings>>,
+    pub inner: Arc<RwLock<TorrentSessionInner>>,
+    api: Arc<Api>,
 }
 
 impl TorrentSession {
-    pub fn new(settings: AppSettings) -> Self {
-        let downloads = Arc::new(RwLock::new(HashMap::new()));
-        let settings = Arc::new(RwLock::new(settings));
-        Self { downloads, settings }
+    pub async fn new(settings: AppSettings) -> Self {
+        let download_dir = PathBuf::from(&settings.save_path);
+        std::fs::create_dir_all(&download_dir).ok();
+
+        let session_opts = SessionOptions {
+            persistence: Some(SessionPersistenceConfig::Json {
+                folder: Some(download_dir.join(".rqbit-session")),
+            }),
+            ..Default::default()
+        };
+
+        let session = Session::new_with_opts(download_dir.clone(), session_opts)
+            .await
+            .expect("Failed to create session");
+
+        let api = Arc::new(Api::new(session, None));
+
+        let inner = Arc::new(RwLock::new(TorrentSessionInner {
+            downloads: HashMap::new(),
+            settings,
+        }));
+
+        Self { inner, api }
     }
 
     pub async fn add_download(&self, magnet: &str, save_path: &str) -> Result<String, String> {
         let hash = extract_hash_from_magnet(magnet)
-            .unwrap_or_else(|| format!("{:x}", md5_simple(magnet.as_bytes())));
+            .unwrap_or_else(|| format!("{:x}", hash_fallback(magnet.as_bytes())));
 
-        let handle = TorrentHandle {
-            name: truncate_magnet(magnet),
-            progress: 0.0,
-            download_rate: 0,
-            upload_rate: 0,
-            total_size: 0,
-            downloaded: 0,
-            num_peers: 0,
-            state: DownloadState::Queued,
-            save_path: save_path.to_string(),
-            added_date: chrono::Utc::now().to_rfc3339(),
-            magnet: magnet.to_string(),
+        let add_opts = AddTorrentOptions {
+            overwrite: true,
+            ..Default::default()
         };
 
-        let mut downloads = self.downloads.write().await;
-        downloads.insert(hash.clone(), handle);
+        match self
+            .api
+            .api_add_torrent(AddTorrent::Url(Cow::Owned(magnet.to_string())), Some(add_opts))
+            .await
+        {
+            Ok(resp) => {
+                let id = resp.id.ok_or("No torrent ID returned")?;
 
-        Ok(hash)
+                let mut inner = self.inner.write().await;
+                let info = self.api.api_torrent_details(TorrentIdOrHash::Id(id)).ok();
+                let name = info
+                    .as_ref()
+                    .and_then(|d| d.name.clone())
+                    .unwrap_or_else(|| truncate_magnet(magnet));
+
+                let handle = TorrentHandle {
+                    name,
+                    torrent_id: Some(id),
+                    progress: 0.0,
+                    download_rate: 0,
+                    upload_rate: 0,
+                    total_size: 0,
+                    downloaded: 0,
+                    num_peers: 0,
+                    state: DownloadState::Connecting,
+                    save_path: save_path.to_string(),
+                    added_date: chrono::Utc::now().to_rfc3339(),
+                    magnet: magnet.to_string(),
+                    error: None,
+                };
+
+                inner.downloads.insert(hash.clone(), handle);
+                Ok(hash)
+            }
+            Err(e) => {
+                let handle = TorrentHandle {
+                    name: truncate_magnet(magnet),
+                    torrent_id: None,
+                    progress: 0.0,
+                    download_rate: 0,
+                    upload_rate: 0,
+                    total_size: 0,
+                    downloaded: 0,
+                    num_peers: 0,
+                    state: DownloadState::Error,
+                    save_path: save_path.to_string(),
+                    added_date: chrono::Utc::now().to_rfc3339(),
+                    magnet: magnet.to_string(),
+                    error: Some(e.to_string()),
+                };
+
+                let mut inner = self.inner.write().await;
+                inner.downloads.insert(hash.clone(), handle);
+                Ok(hash)
+            }
+        }
     }
 
     pub async fn get_downloads(&self) -> Vec<crate::types::DownloadStatus> {
-        let downloads = self.downloads.read().await;
-        downloads
+        let mut inner = self.inner.write().await;
+
+        for (_hash, handle) in inner.downloads.iter_mut() {
+            if let Some(id) = handle.torrent_id {
+                let tid = TorrentIdOrHash::Id(id);
+                if let Some(mgr) = self.api.session().get(tid) {
+                    let stats = mgr.stats();
+                    handle.name = mgr.name().unwrap_or_else(|| handle.name.clone());
+                    handle.total_size = stats.total_bytes;
+                    handle.downloaded = stats.progress_bytes;
+                    handle.progress = if stats.total_bytes > 0 {
+                        stats.progress_bytes as f32 / stats.total_bytes as f32
+                    } else {
+                        0.0
+                    };
+
+                    if let Some(ref live) = stats.live {
+                        handle.download_rate = live.download_speed.as_bytes();
+                        handle.upload_rate = live.upload_speed.as_bytes();
+                    } else {
+                        handle.download_rate = 0;
+                        handle.upload_rate = 0;
+                    }
+
+                    handle.state = if stats.finished {
+                        DownloadState::Finished
+                    } else {
+                        match stats.state {
+                            librqbit::TorrentStatsState::Paused => DownloadState::Paused,
+                            librqbit::TorrentStatsState::Live => {
+                                if stats.live.is_some() {
+                                    DownloadState::Downloading
+                                } else {
+                                    DownloadState::Connecting
+                                }
+                            }
+                            librqbit::TorrentStatsState::Initializing => DownloadState::Connecting,
+                            librqbit::TorrentStatsState::Error => DownloadState::Error,
+                        }
+                    };
+                }
+            }
+        }
+
+        inner
+            .downloads
             .iter()
             .map(|(hash, h)| crate::types::DownloadStatus {
                 hash: hash.clone(),
@@ -88,8 +206,14 @@ impl TorrentSession {
     }
 
     pub async fn pause_download(&self, hash: &str) -> Result<bool, String> {
-        let mut downloads = self.downloads.write().await;
-        if let Some(handle) = downloads.get_mut(hash) {
+        let mut inner = self.inner.write().await;
+        if let Some(handle) = inner.downloads.get_mut(hash) {
+            if let Some(id) = handle.torrent_id {
+                self.api
+                    .api_torrent_action_pause(TorrentIdOrHash::Id(id))
+                    .await
+                    .map_err(|e| e.to_string())?;
+            }
             handle.state = DownloadState::Paused;
             handle.download_rate = 0;
             return Ok(true);
@@ -98,44 +222,39 @@ impl TorrentSession {
     }
 
     pub async fn resume_download(&self, hash: &str) -> Result<bool, String> {
-        let mut downloads = self.downloads.write().await;
-        if let Some(handle) = downloads.get_mut(hash) {
+        let mut inner = self.inner.write().await;
+        if let Some(handle) = inner.downloads.get_mut(hash) {
+            if let Some(id) = handle.torrent_id {
+                self.api
+                    .api_torrent_action_start(TorrentIdOrHash::Id(id))
+                    .await
+                    .map_err(|e| e.to_string())?;
+            }
             handle.state = DownloadState::Downloading;
             return Ok(true);
         }
         Err("Download not found".to_string())
     }
 
-    pub async fn remove_download(&self, hash: &str, _delete_files: bool) -> Result<bool, String> {
-        let mut downloads = self.downloads.write().await;
-        if downloads.remove(hash).is_some() {
+    pub async fn remove_download(&self, hash: &str, delete_files: bool) -> Result<bool, String> {
+        let mut inner = self.inner.write().await;
+        if let Some(handle) = inner.downloads.remove(hash) {
+            if let Some(id) = handle.torrent_id {
+                if delete_files {
+                    self.api
+                        .api_torrent_action_delete(TorrentIdOrHash::Id(id))
+                        .await
+                        .map_err(|e| e.to_string())?;
+                } else {
+                    self.api
+                        .api_torrent_action_forget(TorrentIdOrHash::Id(id))
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+            }
             return Ok(true);
         }
         Err("Download not found".to_string())
-    }
-
-    pub async fn simulate_progress(&self) {
-        let mut downloads = self.downloads.write().await;
-        for (_hash, handle) in downloads.iter_mut() {
-            if handle.state == DownloadState::Downloading && handle.progress < 1.0 {
-                let increment = (rand_f32() * 0.02).min(0.02);
-                handle.progress = (handle.progress + increment).min(1.0);
-                handle.download_rate = (rand_u64() % 10_000_000) + 500_000;
-                handle.upload_rate = (rand_u64() % 2_000_000) + 100_000;
-                handle.num_peers = (rand_u32() % 50) + 5;
-
-                if handle.total_size == 0 {
-                    handle.total_size = 700_000_000 + (rand_u64() % 3_300_000_000);
-                }
-                handle.downloaded = (handle.progress * handle.total_size as f32) as u64;
-
-                if handle.progress >= 1.0 {
-                    handle.state = DownloadState::Finished;
-                    handle.download_rate = 0;
-                    handle.upload_rate = 0;
-                }
-            }
-        }
     }
 }
 
@@ -165,32 +284,7 @@ fn truncate_magnet(magnet: &str) -> String {
     }
 }
 
-fn rand_f32() -> f32 {
-    use std::collections::hash_map::RandomState;
-    use std::hash::{BuildHasher, Hasher};
-    let s = RandomState::new();
-    let mut hasher = s.build_hasher();
-    hasher.write_u64(0);
-    (hasher.finish() as f32) / (u64::MAX as f32)
-}
-
-fn rand_u64() -> u64 {
-    use std::collections::hash_map::RandomState;
-    use std::hash::{BuildHasher, Hasher};
-    let s = RandomState::new();
-    let mut hasher = s.build_hasher();
-    hasher.write_u64(std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos() as u64);
-    hasher.finish()
-}
-
-fn rand_u32() -> u32 {
-    rand_u64() as u32
-}
-
-fn md5_simple(data: &[u8]) -> u64 {
+fn hash_fallback(data: &[u8]) -> u64 {
     let mut hash: u64 = 0xcbf29ce484222325;
     for &byte in data {
         hash ^= byte as u64;
