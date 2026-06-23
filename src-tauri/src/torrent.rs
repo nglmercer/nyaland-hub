@@ -5,7 +5,8 @@ use std::sync::Arc;
 
 use librqbit::api::TorrentIdOrHash;
 use librqbit::{
-    AddTorrent, AddTorrentOptions, Api, Session, SessionOptions, SessionPersistenceConfig,
+    AddTorrent, AddTorrentOptions, Api, DhtSessionConfig, Session, SessionOptions,
+    SessionPersistenceConfig,
 };
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
@@ -52,13 +53,36 @@ pub struct TorrentSession {
 
 impl TorrentSession {
     pub async fn new(settings: AppSettings) -> Self {
-        let download_dir = PathBuf::from(&settings.save_path);
+        let download_dir = if cfg!(target_os = "android") {
+            // Use app's external files dir on Android
+            dirs::download_dir()
+                .unwrap_or_else(|| PathBuf::from("/sdcard/Download"))
+                .join("NyaHub")
+        } else {
+            PathBuf::from(&settings.save_path)
+        };
         std::fs::create_dir_all(&download_dir).ok();
 
         let session_opts = SessionOptions {
-            persistence: Some(SessionPersistenceConfig::Json {
-                folder: Some(download_dir.join(".rqbit-session")),
-            }),
+            persistence: if cfg!(target_os = "android") {
+                None
+            } else {
+                Some(SessionPersistenceConfig::Json {
+                    folder: Some(download_dir.join(".rqbit-session")),
+                })
+            },
+            dht: {
+                let mut dht_cfg = DhtSessionConfig::default();
+                if cfg!(target_os = "android") {
+                    let dht_dir = download_dir.join(".rqbit-dht");
+                    std::fs::create_dir_all(&dht_dir).ok();
+                    dht_cfg.persistence = Some(librqbit::dht::DhtPersistenceConfig {
+                        dump_interval: None,
+                        config_filename: Some(dht_dir.join("dht.json")),
+                    });
+                }
+                Some(dht_cfg)
+            },
             ..Default::default()
         };
 
