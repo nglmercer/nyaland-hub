@@ -63,6 +63,15 @@ impl TorrentSession {
         let hist = DownloadHistory::load(&hp);
         let mut downloads = std::collections::HashMap::new();
         for entry in &hist.entries {
+            let state = if matches!(
+                entry.state,
+                DownloadState::Downloading | DownloadState::Connecting | DownloadState::Queued
+            ) {
+                DownloadState::Paused
+            } else {
+                entry.state.clone()
+            };
+
             downloads.insert(
                 entry.hash.clone(),
                 TorrentHandle {
@@ -74,7 +83,7 @@ impl TorrentSession {
                     total_size: entry.total_size,
                     downloaded: entry.total_size,
                     num_peers: 0,
-                    state: entry.state.clone(),
+                    state,
                     save_path: entry.save_path.clone(),
                     added_date: entry.added_date.clone(),
                     magnet: entry.magnet.clone(),
@@ -240,9 +249,11 @@ impl TorrentSession {
     }
 
     pub async fn get_downloads_filtered(&self, filter: &DownloadFilter) -> Vec<DownloadStatus> {
+        let mut state_changed = false;
         {
             let mut inner = self.inner.write().await;
             for handle in inner.downloads.values_mut() {
+                let old_state = handle.state.clone();
                 if let Some(id) = handle.torrent_id {
                     let tid = TorrentIdOrHash::Id(id);
                     if let Some(mgr) = self.session.get(tid) {
@@ -282,30 +293,39 @@ impl TorrentSession {
                                 librqbit::TorrentStatsState::Error => DownloadState::Error,
                             }
                         };
+
+                        if old_state != handle.state {
+                            state_changed = true;
+                        }
                     }
                 }
             }
-
-            inner
-                .downloads
-                .iter()
-                .filter(|(_, h)| filter.matches(&h.state))
-                .map(|(hash, h)| DownloadStatus {
-                    hash: hash.clone(),
-                    name: h.name.clone(),
-                    progress: h.progress,
-                    download_rate: h.download_rate,
-                    upload_rate: h.upload_rate,
-                    total_size: h.total_size,
-                    downloaded: h.downloaded,
-                    num_peers: h.num_peers,
-                    state: h.state.clone(),
-                    save_path: h.save_path.clone(),
-                    added_date: Some(h.added_date.clone()),
-                    error: h.error.clone(),
-                })
-                .collect()
         }
+
+        if state_changed {
+            self.save_history().await;
+        }
+
+        let inner = self.inner.read().await;
+        inner
+            .downloads
+            .iter()
+            .filter(|(_, h)| filter.matches(&h.state))
+            .map(|(hash, h)| DownloadStatus {
+                hash: hash.clone(),
+                name: h.name.clone(),
+                progress: h.progress,
+                download_rate: h.download_rate,
+                upload_rate: h.upload_rate,
+                total_size: h.total_size,
+                downloaded: h.downloaded,
+                num_peers: h.num_peers,
+                state: h.state.clone(),
+                save_path: h.save_path.clone(),
+                added_date: Some(h.added_date.clone()),
+                error: h.error.clone(),
+            })
+            .collect()
     }
 
     pub async fn pause_download(&self, hash: &str) -> Result<bool, String> {
