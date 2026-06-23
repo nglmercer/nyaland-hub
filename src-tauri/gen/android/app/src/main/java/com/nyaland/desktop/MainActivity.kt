@@ -100,7 +100,6 @@ class MainActivity : TauriActivity() {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
       }
 
-      // Fallback: try with generic file browser if folder intent fails
       try {
         startActivity(intent)
       } catch (_: Exception) {

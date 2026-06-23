@@ -189,3 +189,141 @@ pub async fn detect_media_files_recursive(path: String) -> Result<Vec<String>, S
     files.sort();
     Ok(files)
 }
+
+#[cfg(target_os = "android")]
+fn get_mime_type(path: &str) -> String {
+    match path.rsplit('.').next().unwrap_or("") {
+        "mkv" => "video/x-matroska",
+        "mp4" => "video/mp4",
+        "avi" => "video/x-msvideo",
+        "webm" => "video/webm",
+        "mov" => "video/quicktime",
+        "flv" => "video/x-flv",
+        "wmv" => "video/x-ms-wmv",
+        "m4v" => "video/x-m4v",
+        "ts" => "video/mp2t",
+        "rmvb" => "application/vnd.rn-realmedia-vbr",
+        "mp3" => "audio/mpeg",
+        "flac" => "audio/flac",
+        "wav" => "audio/wav",
+        "ogg" => "audio/ogg",
+        _ => "*/*",
+    }
+    .to_string()
+}
+
+#[tauri::command]
+pub async fn open_file_with_shell(file_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&file_path);
+    if !path.exists() {
+        return Err(format!("File not found: {file_path}"));
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        let mime = get_mime_type(&file_path);
+        let content_uri = file_path_to_content_uri(&file_path);
+        std::process::Command::new("/system/bin/am")
+            .args([
+                "start",
+                "-a",
+                "android.intent.action.VIEW",
+                "-d",
+                &content_uri,
+                "-t",
+                &mime,
+                "--grant-read-uri-permission",
+            ])
+            .output()
+            .map_err(|e| format!("Failed to launch player: {e}"))?;
+        Ok(())
+    }
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&file_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {e}"))?;
+        Ok(())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&file_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {e}"))?;
+        Ok(())
+    }
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/C", "start", "", &file_path])
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {e}"))?;
+        Ok(())
+    }
+}
+
+#[tauri::command]
+pub async fn open_folder_with_shell(folder_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&folder_path);
+    if !path.exists() {
+        return Err(format!("Folder not found: {folder_path}"));
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        let content_uri = file_path_to_content_uri(&folder_path);
+        std::process::Command::new("/system/bin/am")
+            .args([
+                "start",
+                "-a",
+                "android.intent.action.VIEW",
+                "-d",
+                &content_uri,
+                "-t",
+                "vnd.android.document/directory",
+                "--grant-read-uri-permission",
+            ])
+            .output()
+            .map_err(|e| format!("Failed to open folder: {e}"))?;
+        Ok(())
+    }
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&folder_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open folder: {e}"))?;
+        Ok(())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&folder_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open folder: {e}"))?;
+        Ok(())
+    }
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&folder_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open folder: {e}"))?;
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "android")]
+fn file_path_to_content_uri(file_path: &str) -> String {
+    let prefix = "/storage/emulated/0/";
+    if let Some(relative) = file_path.strip_prefix(prefix) {
+        format!(
+            "content://com.nyaland.desktop.fileprovider/external_files/{}",
+            relative.trim_start_matches('/')
+        )
+    } else {
+        format!("file://{file_path}")
+    }
+}

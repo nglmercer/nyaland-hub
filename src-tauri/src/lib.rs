@@ -42,6 +42,8 @@ pub fn run() {
             commands::save_settings,
             commands::detect_media_files,
             commands::detect_media_files_recursive,
+            commands::open_file_with_shell,
+            commands::open_folder_with_shell,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

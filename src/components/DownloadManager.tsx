@@ -42,13 +42,11 @@ async function playFile(path: string) {
     if (files.length === 0) {
       const allFiles: string[] = await invoke("detect_media_files_recursive", { path });
       if (allFiles.length > 0) {
-        const { openPath } = await import("@tauri-apps/plugin-opener");
-        await openPath(allFiles[0]);
+        await invoke("open_file_with_shell", { filePath: allFiles[0] });
       }
       return;
     }
-    const { openPath } = await import("@tauri-apps/plugin-opener");
-    await openPath(files[0]);
+    await invoke("open_file_with_shell", { filePath: files[0] });
   } catch (e) {
     console.error("Play failed:", e);
   }
@@ -56,8 +54,8 @@ async function playFile(path: string) {
 
 async function openFolder(path: string) {
   try {
-    const { revealItemInDir } = await import("@tauri-apps/plugin-opener");
-    await revealItemInDir(path);
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("open_folder_with_shell", { folderPath: path });
   } catch (e) {
     console.error("Open folder failed:", e);
   }
