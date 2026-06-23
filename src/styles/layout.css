@@ -3,10 +3,13 @@
   align-items: center;
   gap: 16px;
   padding: 12px 24px;
+  padding-top: max(12px, env(safe-area-inset-top));
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
   transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+  z-index: 50;
 }
 
 .navbar-brand {
@@ -96,6 +99,7 @@
 .app-content {
   flex: 1;
   overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Hamburger button - hidden on desktop */
