@@ -23,6 +23,10 @@ android {
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+        ndk {
+            // Support 16KB page sizes
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
     buildTypes {
         getByName("debug") {
@@ -30,10 +34,13 @@ android {
             isDebuggable = true
             isJniDebuggable = true
             isMinifyEnabled = false
-            packaging {                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
+            packaging {
+                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
                 jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86_64/*.so")
+                // 16KB page alignment
+                jniLibs.useLegacyPackaging = false
             }
         }
         getByName("release") {
@@ -43,6 +50,10 @@ android {
                     .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
                     .toList().toTypedArray()
             )
+            packaging {
+                // 16KB page alignment
+                jniLibs.useLegacyPackaging = false
+            }
         }
     }
     kotlinOptions {
