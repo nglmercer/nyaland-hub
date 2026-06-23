@@ -25,7 +25,7 @@ jobs:
             rust_target: aarch64-unknown-linux-gnu
             bundle_args: "--bundles deb"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -37,9 +37,9 @@ jobs:
         with:
           workspaces: src-tauri
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
 
@@ -75,7 +75,7 @@ jobs:
           find "$ARTIFACT_DIR" -type f
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: release-linux-${{ matrix.arch }}
           path: artifacts/linux-${{ matrix.arch }}/
@@ -93,7 +93,7 @@ jobs:
           - arch: x86_64
             rust_target: x86_64-apple-darwin
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -105,9 +105,9 @@ jobs:
         with:
           workspaces: src-tauri
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
 
@@ -127,7 +127,7 @@ jobs:
           find "$ARTIFACT_DIR" -type f
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: release-macos-${{ matrix.arch }}
           path: artifacts/macos-${{ matrix.arch }}/
@@ -137,7 +137,7 @@ jobs:
     name: Build (Windows)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -149,9 +149,9 @@ jobs:
         with:
           workspaces: src-tauri
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
 
@@ -172,7 +172,7 @@ jobs:
           Get-ChildItem -Path $artifactDir -Recurse -File | Select-Object -First 20
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: release-windows-x86_64
           path: artifacts/windows-x86_64/
@@ -183,7 +183,7 @@ jobs:
     needs: [build-linux, build-macos, build-windows]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           path: artifacts
           merge-multiple: true
