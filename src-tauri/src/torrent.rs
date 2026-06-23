@@ -54,10 +54,8 @@ pub struct TorrentSession {
 impl TorrentSession {
     pub async fn new(settings: AppSettings) -> Self {
         let download_dir = if cfg!(target_os = "android") {
-            // Use app's external files dir on Android
-            dirs::download_dir()
-                .unwrap_or_else(|| PathBuf::from("/sdcard/Download"))
-                .join("NyaHub")
+            // Use app's internal files dir on Android (no permission needed)
+            PathBuf::from("/data/user/0/com.nyaland.desktop/files/NyaHub")
         } else {
             PathBuf::from(&settings.save_path)
         };
@@ -71,16 +69,19 @@ impl TorrentSession {
                     folder: Some(download_dir.join(".rqbit-session")),
                 })
             },
-            dht: {
+            dht: if cfg!(target_os = "android") {
+                Some(DhtSessionConfig {
+                    persistence: None,
+                    ..Default::default()
+                })
+            } else {
                 let mut dht_cfg = DhtSessionConfig::default();
-                if cfg!(target_os = "android") {
-                    let dht_dir = download_dir.join(".rqbit-dht");
-                    std::fs::create_dir_all(&dht_dir).ok();
-                    dht_cfg.persistence = Some(librqbit::dht::DhtPersistenceConfig {
-                        dump_interval: None,
-                        config_filename: Some(dht_dir.join("dht.json")),
-                    });
-                }
+                let dht_dir = download_dir.join(".rqbit-dht");
+                std::fs::create_dir_all(&dht_dir).ok();
+                dht_cfg.persistence = Some(librqbit::dht::DhtPersistenceConfig {
+                    dump_interval: None,
+                    config_filename: Some(dht_dir.join("dht.json")),
+                });
                 Some(dht_cfg)
             },
             ..Default::default()
