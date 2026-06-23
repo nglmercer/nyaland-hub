@@ -3,6 +3,8 @@ package com.nyaland.desktop
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import android.webkit.MimeTypeMap
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.FileProvider
@@ -12,6 +14,19 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+    requestStoragePermission()
+  }
+
+  private fun requestStoragePermission() {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+      if (!Environment.isExternalStorageManager()) {
+        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+          data = Uri.parse("package:$packageName")
+          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+      }
+    }
   }
 
   private fun getMimeType(filePath: String): String {

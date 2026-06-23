@@ -5,12 +5,11 @@ use crate::torrent::DownloadState;
 
 pub fn resolve_save_path(path: &str) -> PathBuf {
     if cfg!(target_os = "android") {
-        let base = PathBuf::from("/data/data/com.nyaland.desktop/files");
         let trimmed = path.trim();
-        if trimmed.is_empty() {
-            return base.join("Nyaland");
+        if !trimmed.is_empty() && !trimmed.starts_with("~/") && trimmed != "~" {
+            return PathBuf::from(trimmed);
         }
-        return base.join(trimmed);
+        return PathBuf::from("/storage/emulated/0/Download/Nyaland");
     }
 
     let path = path.trim();
@@ -126,9 +125,13 @@ pub struct AppSettings {
 
 impl Default for AppSettings {
     fn default() -> Self {
-        let save_path = dirs::download_dir()
-            .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join("Nyaland");
+        let save_path = if cfg!(target_os = "android") {
+            PathBuf::from("/storage/emulated/0/Download/Nyaland")
+        } else {
+            dirs::download_dir()
+                .unwrap_or_else(|| std::path::PathBuf::from("."))
+                .join("Nyaland")
+        };
 
         Self {
             save_path: save_path.to_string_lossy().to_string(),
