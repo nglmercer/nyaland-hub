@@ -1,4 +1,4 @@
-package com.nyaland.app
+package com.nyaland.desktop
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
