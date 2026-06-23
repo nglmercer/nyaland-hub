@@ -1,0 +1,3 @@
+[submodule "nyaa-api"]
+	url = https://github.com/nglmercer/nyaapi-rs.git
+	branch = main
