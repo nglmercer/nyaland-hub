@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use tauri::State;
 
 use crate::nyaa::NyaaClient;
@@ -7,6 +9,23 @@ use crate::types::*;
 pub struct AppState {
     pub nyaa: NyaaClient,
     pub torrent: TorrentSession,
+}
+
+fn settings_file_path() -> PathBuf {
+    dirs::config_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join("nyaland")
+        .join("settings.json")
+}
+
+pub fn load_settings_from_disk() -> AppSettings {
+    let path = settings_file_path();
+    if let Ok(data) = std::fs::read_to_string(&path) {
+        if let Ok(settings) = serde_json::from_str::<AppSettings>(&data) {
+            return settings;
+        }
+    }
+    AppSettings::default()
 }
 
 #[tauri::command]
@@ -67,8 +86,10 @@ pub async fn remove_download(
 
 #[tauri::command]
 pub async fn get_settings(state: State<'_, AppState>) -> Result<String, String> {
-    let inner = state.torrent.inner.read().await;
-    serde_json::to_string(&inner.settings).map_err(|e| e.to_string())
+    let settings = load_settings_from_disk();
+    let mut inner = state.torrent.inner.write().await;
+    inner.settings = settings.clone();
+    serde_json::to_string(&settings).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -76,32 +97,15 @@ pub async fn save_settings(
     state: State<'_, AppState>,
     settings: AppSettings,
 ) -> Result<bool, String> {
+    let path = settings_file_path();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let json = serde_json::to_string_pretty(&settings).map_err(|e| e.to_string())?;
+    std::fs::write(&path, json).map_err(|e| e.to_string())?;
+
     let mut inner = state.torrent.inner.write().await;
     inner.settings = settings;
-    Ok(true)
-}
-
-#[tauri::command]
-pub async fn play_file(path: String) -> Result<bool, String> {
-    let path_clone = path.clone();
-    std::thread::spawn(move || {
-        let result = open_file_with_system_app(&path_clone);
-        if let Err(e) = result {
-            eprintln!("Failed to open file: {}", e);
-        }
-    });
-    Ok(true)
-}
-
-#[tauri::command]
-pub async fn open_folder(path: String) -> Result<bool, String> {
-    let path_clone = path.clone();
-    std::thread::spawn(move || {
-        let result = open_folder_with_system_app(&path_clone);
-        if let Err(e) = result {
-            eprintln!("Failed to open folder: {}", e);
-        }
-    });
     Ok(true)
 }
 
@@ -157,35 +161,4 @@ pub async fn detect_media_files_recursive(path: String) -> Result<Vec<String>, S
     walk_dir(root, &media_exts, &mut files)?;
     files.sort();
     Ok(files)
-}
-
-fn open_file_with_system_app(path: &str) -> Result<(), String> {
-    let path_obj = std::path::Path::new(path);
-    if !path_obj.exists() {
-        return Err(format!("File not found: {}", path));
-    }
-
-    // Use opener crate which handles all platforms (Linux, macOS, Windows, Android)
-    opener::open(path).map_err(|e| format!("Failed to open file: {}", e))
-}
-
-fn open_folder_with_system_app(path: &str) -> Result<(), String> {
-    let path_obj = std::path::Path::new(path);
-    if !path_obj.exists() {
-        return Err(format!("Folder not found: {}", path));
-    }
-
-    // Use opener crate which handles all platforms (Linux, macOS, Windows, Android)
-    opener::open(path).map_err(|e| format!("Failed to open folder: {}", e))
-}
-
-// Stub commands - Android commands are not needed when using opener crate
-#[tauri::command]
-pub async fn play_file_android(_path: String) -> Result<bool, String> {
-    Err("Not needed - use play_file instead".into())
-}
-
-#[tauri::command]
-pub async fn open_folder_android(_path: String) -> Result<bool, String> {
-    Err("Not needed - use open_folder instead".into())
 }

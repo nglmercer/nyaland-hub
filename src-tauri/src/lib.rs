@@ -7,14 +7,13 @@ pub use commands::AppState;
 
 use nyaa::NyaaClient;
 use torrent::TorrentSession;
-use types::AppSettings;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(async {
-            let settings = AppSettings::default();
+            let settings = commands::load_settings_from_disk();
             let nyaa = NyaaClient::new(&settings.nyaa_base_url);
             let torrent = TorrentSession::new(settings).await;
 
@@ -22,6 +21,8 @@ pub fn run() {
 
             tauri::Builder::default()
                 .plugin(tauri_plugin_shell::init())
+                .plugin(tauri_plugin_fs::init())
+                .plugin(tauri_plugin_opener::init())
                 .manage(state)
                 .invoke_handler(tauri::generate_handler![
                     commands::search,
@@ -33,12 +34,8 @@ pub fn run() {
                     commands::remove_download,
                     commands::get_settings,
                     commands::save_settings,
-                    commands::play_file,
-                    commands::open_folder,
                     commands::detect_media_files,
                     commands::detect_media_files_recursive,
-                    commands::play_file_android,
-                    commands::open_folder_android,
                 ])
                 .run(tauri::generate_context!())
                 .expect("error while running tauri application");

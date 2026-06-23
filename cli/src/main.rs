@@ -141,8 +141,17 @@ fn sign_apk(apk_path: &str) -> Result<String> {
         return Ok(apk_path.to_string());
     }
 
-    let zipaligned_path = apk_path.replace("-unsigned", "-zipaligned");
-    let signed_path = apk_path.replace("-unsigned", "-signed");
+    let (zipaligned_path, signed_path) = if apk_path.contains("-unsigned") {
+        (
+            apk_path.replace("-unsigned", "-zipaligned"),
+            apk_path.replace("-unsigned", "-signed"),
+        )
+    } else if let Some(dot_pos) = apk_path.rfind('.') {
+        let (base, ext) = apk_path.split_at(dot_pos);
+        (format!("{}-zipaligned{}", base, ext), format!("{}-signed{}", base, ext))
+    } else {
+        (format!("{}-zipaligned", apk_path), format!("{}-signed", apk_path))
+    };
 
     // Find zipalign
     let mut zipalign_path = String::new();
@@ -282,6 +291,18 @@ fn check_env() -> Result<()> {
         }
         _ => {
             println!("  {} npx not found", "✗".red());
+            all_ok = false;
+        }
+    }
+
+    // Check for adb
+    let adb_check = Command::new("which").arg("adb").status();
+    match adb_check {
+        Ok(status) if status.success() => {
+            println!("  {} adb available", "✓".green());
+        }
+        _ => {
+            println!("  {} adb not found", "✗".red());
             all_ok = false;
         }
     }
@@ -509,13 +530,15 @@ fn main() -> Result<()> {
             let is_release = *release && !*debug;
             let apk_path = get_apk_path(is_release);
 
+            let signed_path = sign_apk(&apk_path)?;
+
             // Install first
             println!(
                 "{}",
-                format!("Installing {}...", apk_path).bright_white().bold()
+                format!("Installing {}...", signed_path).bright_white().bold()
             );
 
-            let install_args = vec!["install".into(), "-r".into(), apk_path];
+            let install_args = vec!["install".into(), "-r".into(), signed_path];
             run_cmd("adb", &install_args)?;
 
             // Then run

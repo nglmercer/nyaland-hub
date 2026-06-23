@@ -36,28 +36,28 @@ function stateColor(state: string): string {
 }
 
 async function playFile(path: string) {
-  const { invoke } = await import("@tauri-apps/api/core");
   try {
+    const { invoke } = await import("@tauri-apps/api/core");
     const files: string[] = await invoke("detect_media_files", { path });
     if (files.length === 0) {
-      // Try recursive detection for nested torrent structures
       const allFiles: string[] = await invoke("detect_media_files_recursive", { path });
       if (allFiles.length > 0) {
-        await invoke("play_file", { path: allFiles[0] });
+        const { openPath } = await import("@tauri-apps/plugin-opener");
+        await openPath(allFiles[0]);
       }
       return;
     }
-
-    await invoke("play_file", { path: files[0] });
+    const { openPath } = await import("@tauri-apps/plugin-opener");
+    await openPath(files[0]);
   } catch (e) {
     console.error("Play failed:", e);
   }
 }
 
 async function openFolder(path: string) {
-  const { invoke } = await import("@tauri-apps/api/core");
   try {
-    await invoke("open_folder", { path });
+    const { revealItemInDir } = await import("@tauri-apps/plugin-opener");
+    await revealItemInDir(path);
   } catch (e) {
     console.error("Open folder failed:", e);
   }
