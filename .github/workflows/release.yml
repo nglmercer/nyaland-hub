@@ -12,18 +12,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-linux:
-    name: Build (Linux ${{ matrix.arch }})
+  build-linux-x86_64:
+    name: Build (Linux x86_64)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x86_64
-            rust_target: x86_64-unknown-linux-gnu
-          - arch: aarch64
-            rust_target: aarch64-unknown-linux-gnu
-            bundle_args: "--bundles deb"
     steps:
       - uses: actions/checkout@v5
         with:
@@ -31,7 +22,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.rust_target }}
+          targets: x86_64-unknown-linux-gnu
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -43,33 +34,22 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Install Linux deps (x86_64)
-        if: matrix.arch == 'x86_64'
+      - name: Install Linux deps
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev xdg-utils
-
-      - name: Install Linux deps (aarch64)
-        if: matrix.arch == 'aarch64'
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libwebkit2gtk-4.1-dev:arm64 libappindicator3-dev:arm64 librsvg2-dev:arm64 libgtk-3-dev:arm64 patchelf xdg-utils
-        env:
-          CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
       - name: Build frontend
         run: npm run build
 
       - name: Build Tauri app
-        run: npx tauri build --target ${{ matrix.rust_target }} ${{ matrix.bundle_args || '' }} -- --no-default-features
+        run: npx tauri build --target x86_64-unknown-linux-gnu -- --no-default-features
         working-directory: src-tauri
 
       - name: Collect artifacts
         run: |
-          BUNDLE_DIR=src-tauri/target/${{ matrix.rust_target }}/release/bundle
-          ARTIFACT_DIR=artifacts/linux-${{ matrix.arch }}
+          BUNDLE_DIR=src-tauri/target/x86_64-unknown-linux-gnu/release/bundle
+          ARTIFACT_DIR=artifacts/linux-x86_64
           mkdir -p "$ARTIFACT_DIR"
           cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
           find "$ARTIFACT_DIR" -type f
@@ -77,8 +57,58 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
-          name: release-linux-${{ matrix.arch }}
-          path: artifacts/linux-${{ matrix.arch }}/
+          name: release-linux-x86_64
+          path: artifacts/linux-x86_64/
+          if-no-files-found: warn
+
+  build-linux-aarch64:
+    name: Build (Linux aarch64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build in arm64 container
+        run: |
+          docker run --rm --platform linux/arm64 \
+            -v "${{ github.workspace }}:/project" \
+            -w /project \
+            -e CARGO_TERM_COLOR=always \
+            arm64v8/ubuntu:noble bash -c "
+              export DEBIAN_FRONTEND=noninteractive &&
+              apt-get update &&
+              apt-get install -y curl build-essential pkg-config \
+                libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
+                libgtk-3-dev patchelf xdg-utils npm &&
+              curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y &&
+              export PATH=\"/root/.cargo/bin:\$PATH\" &&
+              rustup target add aarch64-unknown-linux-gnu &&
+              cd /project &&
+              npm ci &&
+              npm run build &&
+              cd src-tauri &&
+              npx tauri build --target aarch64-unknown-linux-gnu --bundles deb -- --no-default-features
+            "
+
+      - name: Collect artifacts
+        run: |
+          BUNDLE_DIR=src-tauri/target/aarch64-unknown-linux-gnu/release/bundle
+          ARTIFACT_DIR=artifacts/linux-aarch64
+          mkdir -p "$ARTIFACT_DIR"
+          cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
+          find "$ARTIFACT_DIR" -type f
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: release-linux-aarch64
+          path: artifacts/linux-aarch64/
           if-no-files-found: warn
 
   build-macos:
@@ -180,7 +210,7 @@ jobs:
 
   publish:
     name: Create GitHub Release
-    needs: [build-linux, build-macos, build-windows]
+    needs: [build-linux-x86_64, build-linux-aarch64, build-macos, build-windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v5
