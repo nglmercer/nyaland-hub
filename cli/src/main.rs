@@ -137,7 +137,11 @@ fn sign_apk(apk_path: &str) -> Result<String> {
         .unwrap_or_else(|_| "/home/meme/.android/debug.keystore".into());
 
     if !std::path::Path::new(&keystore).exists() {
-        println!("  {} Debug keystore not found at {}", "!".yellow(), keystore);
+        println!(
+            "  {} Debug keystore not found at {}",
+            "!".yellow(),
+            keystore
+        );
         return Ok(apk_path.to_string());
     }
 
@@ -148,9 +152,15 @@ fn sign_apk(apk_path: &str) -> Result<String> {
         )
     } else if let Some(dot_pos) = apk_path.rfind('.') {
         let (base, ext) = apk_path.split_at(dot_pos);
-        (format!("{}-zipaligned{}", base, ext), format!("{}-signed{}", base, ext))
+        (
+            format!("{}-zipaligned{}", base, ext),
+            format!("{}-signed{}", base, ext),
+        )
     } else {
-        (format!("{}-zipaligned", apk_path), format!("{}-signed", apk_path))
+        (
+            format!("{}-zipaligned", apk_path),
+            format!("{}-signed", apk_path),
+        )
     };
 
     // Find zipalign
@@ -337,7 +347,10 @@ fn get_apk_path(release: bool) -> String {
     if release {
         // Tauri generates universal unsigned APKs
         let paths = [
-            format!("{}/universal/release/app-universal-release-unsigned.apk", base),
+            format!(
+                "{}/universal/release/app-universal-release-unsigned.apk",
+                base
+            ),
             format!("{}/release/app-release.apk", base),
             format!("{}/universal/debug/app-universal-debug.apk", base),
             format!("{}/debug/app-debug.apk", base),
@@ -409,11 +422,7 @@ fn main() -> Result<()> {
                 format!("Building {} APK...", mode).bright_white().bold()
             );
 
-            let mut args = vec![
-                "tauri".into(),
-                "android".into(),
-                "build".into(),
-            ];
+            let mut args = vec!["tauri".into(), "android".into(), "build".into()];
 
             if *debug {
                 args.push("--debug".into());
@@ -464,7 +473,9 @@ fn main() -> Result<()> {
                 println!();
                 println!(
                     "{}",
-                    format!("Installing {}...", signed_path).bright_white().bold()
+                    format!("Installing {}...", signed_path)
+                        .bright_white()
+                        .bold()
                 );
 
                 let install_args = vec!["install".into(), "-r".into(), signed_path.clone()];
@@ -502,7 +513,11 @@ fn main() -> Result<()> {
             );
         }
 
-        Commands::Install { apk, release, debug } => {
+        Commands::Install {
+            apk,
+            release,
+            debug,
+        } => {
             setup_env()?;
 
             let is_release = *release && !*debug;
@@ -535,7 +550,9 @@ fn main() -> Result<()> {
             // Install first
             println!(
                 "{}",
-                format!("Installing {}...", signed_path).bright_white().bold()
+                format!("Installing {}...", signed_path)
+                    .bright_white()
+                    .bold()
             );
 
             let install_args = vec!["install".into(), "-r".into(), signed_path];
@@ -663,11 +680,7 @@ fn main() -> Result<()> {
                                 "unauthorized" => status.bright_yellow(),
                                 _ => status.bright_white(),
                             };
-                            println!(
-                                "  {} ({})",
-                                device.bright_cyan(),
-                                status_colored
-                            );
+                            println!("  {} ({})", device.bright_cyan(), status_colored);
                         }
                     }
                 }

@@ -21,7 +21,10 @@ fn settings_file_path() -> PathBuf {
 pub fn load_settings_from_disk() -> AppSettings {
     let path = settings_file_path();
     if let Ok(data) = std::fs::read_to_string(&path) {
-        if let Ok(settings) = serde_json::from_str::<AppSettings>(&data) {
+        if let Ok(mut settings) = serde_json::from_str::<AppSettings>(&data) {
+            settings.save_path = resolve_save_path(&settings.save_path)
+                .to_string_lossy()
+                .to_string();
             return settings;
         }
     }
@@ -95,8 +98,11 @@ pub async fn get_settings(state: State<'_, AppState>) -> Result<String, String> 
 #[tauri::command]
 pub async fn save_settings(
     state: State<'_, AppState>,
-    settings: AppSettings,
+    mut settings: AppSettings,
 ) -> Result<bool, String> {
+    settings.save_path = resolve_save_path(&settings.save_path)
+        .to_string_lossy()
+        .to_string();
     let path = settings_file_path();
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;

@@ -1,6 +1,21 @@
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 use crate::torrent::DownloadState;
+
+pub fn resolve_save_path(path: &str) -> PathBuf {
+    let path = path.trim();
+    if path.is_empty() {
+        return std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    }
+    if path.starts_with("~/") || path == "~" {
+        if let Some(home) = dirs::home_dir() {
+            let relative = if path == "~" { "" } else { &path[2..] };
+            return home.join(relative);
+        }
+    }
+    PathBuf::from(path)
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchParams {

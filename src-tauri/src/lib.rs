@@ -17,7 +17,7 @@ pub fn run() {
         Ok(rt) => rt.block_on(TorrentSession::new(settings)),
         Err(e) => {
             eprintln!("Failed to create tokio runtime: {e}");
-            TorrentSession::new_fallback()
+            TorrentSession::new_fallback(settings)
         }
     };
 
