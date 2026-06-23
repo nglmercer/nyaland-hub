@@ -73,6 +73,9 @@ impl DownloadHistory {
 }
 
 pub fn history_path() -> PathBuf {
+    if cfg!(target_os = "android") {
+        return PathBuf::from("/data/data/com.nyaland.desktop/files").join("download_history.json");
+    }
     dirs::config_dir()
         .unwrap_or_else(|| PathBuf::from("."))
         .join("nyaland")

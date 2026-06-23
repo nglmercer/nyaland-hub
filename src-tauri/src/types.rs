@@ -4,6 +4,15 @@ use std::path::PathBuf;
 use crate::torrent::DownloadState;
 
 pub fn resolve_save_path(path: &str) -> PathBuf {
+    if cfg!(target_os = "android") {
+        let base = PathBuf::from("/data/data/com.nyaland.desktop/files");
+        let trimmed = path.trim();
+        if trimmed.is_empty() {
+            return base.join("Nyaland");
+        }
+        return base.join(trimmed);
+    }
+
     let path = path.trim();
     if path.is_empty() {
         return std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));

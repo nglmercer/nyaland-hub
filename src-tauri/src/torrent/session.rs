@@ -26,11 +26,7 @@ pub struct TorrentSession {
 
 impl TorrentSession {
     pub async fn new(settings: AppSettings) -> Self {
-        let download_dir = if cfg!(target_os = "android") {
-            PathBuf::from("/data/user/0/com.nyaland.desktop/files/NyaHub")
-        } else {
-            resolve_save_path(&settings.save_path)
-        };
+        let download_dir = resolve_save_path(&settings.save_path);
         std::fs::create_dir_all(&download_dir).ok();
 
         let session_opts = SessionOptions {
@@ -41,32 +37,27 @@ impl TorrentSession {
                     folder: Some(download_dir.join(".rqbit-session")),
                 })
             },
-            dht: if cfg!(target_os = "android") {
-                None
-            } else {
-                Some(DhtSessionConfig {
-                    bootstrap_addrs: Some(vec![
-                        "router.bittorrent.com:6881".to_string(),
-                        "dht.transmissionbt.com:6881".to_string(),
-                        "router.utorrent.com:6881".to_string(),
-                        "dht.libtorrent.org:25401".to_string(),
-                        "dht.aelitis.com:6881".to_string(),
-                    ]),
-                    ..Default::default()
-                })
-            },
+            dht: Some(DhtSessionConfig {
+                bootstrap_addrs: Some(vec![
+                    "router.bittorrent.com:6881".to_string(),
+                    "dht.transmissionbt.com:6881".to_string(),
+                    "router.utorrent.com:6881".to_string(),
+                    "dht.libtorrent.org:25401".to_string(),
+                    "dht.aelitis.com:6881".to_string(),
+                ]),
+                persistence: if cfg!(target_os = "android") {
+                    None
+                } else {
+                    Some(Default::default())
+                },
+                ..Default::default()
+            }),
             ..Default::default()
         };
 
-        let session = match Session::new_with_opts(download_dir.clone(), session_opts).await {
-            Ok(s) => s,
-            Err(e) => {
-                eprintln!("[nyaland] Failed to create torrent session: {e}, using fallback");
-                Session::new(download_dir.clone())
-                    .await
-                    .expect("Failed to create fallback session")
-            }
-        };
+        let session = Session::new_with_opts(download_dir.clone(), session_opts)
+            .await
+            .expect("Failed to create torrent session");
 
         let hp = history::history_path();
         let hist = DownloadHistory::load(&hp);

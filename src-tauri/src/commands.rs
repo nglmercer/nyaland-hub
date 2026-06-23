@@ -13,6 +13,9 @@ pub struct AppState {
 }
 
 fn settings_file_path() -> PathBuf {
+    if cfg!(target_os = "android") {
+        return PathBuf::from("/data/data/com.nyaland.desktop/files").join("settings.json");
+    }
     dirs::config_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join("nyaland")
