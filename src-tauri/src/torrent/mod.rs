@@ -1,4 +1,5 @@
 mod handle;
+pub mod history;
 mod session;
 mod state;
 mod utils;

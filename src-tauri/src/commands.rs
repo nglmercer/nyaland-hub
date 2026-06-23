@@ -9,6 +9,7 @@ use crate::types::*;
 pub struct AppState {
     pub nyaa: NyaaClient,
     pub torrent: TorrentSession,
+    pub _rt: tokio::runtime::Runtime,
 }
 
 fn settings_file_path() -> PathBuf {
@@ -58,6 +59,22 @@ pub async fn add_download(
 pub async fn get_downloads(state: State<'_, AppState>) -> Result<String, String> {
     let downloads = state.torrent.get_downloads().await;
     serde_json::to_string(&downloads).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_downloads_filtered(
+    state: State<'_, AppState>,
+    params: GetDownloadsParams,
+) -> Result<String, String> {
+    let filter = params.filter.unwrap_or(DownloadFilter::All);
+    let downloads = state.torrent.get_downloads_filtered(&filter).await;
+    serde_json::to_string(&downloads).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_download_history(state: State<'_, AppState>) -> Result<String, String> {
+    let history = state.torrent.get_history().await;
+    serde_json::to_string(&history).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

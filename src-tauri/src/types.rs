@@ -57,6 +57,51 @@ pub struct DownloadStatus {
     pub state: DownloadState,
     pub save_path: String,
     pub added_date: Option<String>,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum DownloadFilter {
+    All,
+    Downloading,
+    Paused,
+    Finished,
+    Error,
+}
+
+impl DownloadFilter {
+    pub fn matches(&self, state: &DownloadState) -> bool {
+        match self {
+            DownloadFilter::All => true,
+            DownloadFilter::Downloading => {
+                matches!(
+                    state,
+                    DownloadState::Downloading | DownloadState::Connecting | DownloadState::Queued
+                )
+            }
+            DownloadFilter::Paused => matches!(state, DownloadState::Paused),
+            DownloadFilter::Finished => matches!(state, DownloadState::Finished),
+            DownloadFilter::Error => matches!(state, DownloadState::Error),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetDownloadsParams {
+    pub filter: Option<DownloadFilter>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DownloadHistoryEntry {
+    pub hash: String,
+    pub name: String,
+    pub magnet: String,
+    pub save_path: String,
+    pub total_size: u64,
+    pub state: DownloadState,
+    pub added_date: String,
+    pub completed_date: Option<String>,
+    pub error: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

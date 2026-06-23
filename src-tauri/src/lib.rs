@@ -13,15 +13,15 @@ pub fn run() {
     let settings = commands::load_settings_from_disk();
     let nyaa = NyaaClient::new(&settings.nyaa_base_url);
 
-    let torrent = match tokio::runtime::Runtime::new() {
-        Ok(rt) => rt.block_on(TorrentSession::new(settings)),
-        Err(e) => {
-            eprintln!("Failed to create tokio runtime: {e}");
-            TorrentSession::new_fallback(settings)
-        }
-    };
+    let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
+    let _guard = rt.enter();
+    let torrent = rt.block_on(TorrentSession::new(settings));
 
-    let state = AppState { nyaa, torrent };
+    let state = AppState {
+        nyaa,
+        torrent,
+        _rt: rt,
+    };
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -33,6 +33,8 @@ pub fn run() {
             commands::view_torrent,
             commands::add_download,
             commands::get_downloads,
+            commands::get_downloads_filtered,
+            commands::get_download_history,
             commands::pause_download,
             commands::resume_download,
             commands::remove_download,

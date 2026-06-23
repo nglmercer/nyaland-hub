@@ -1,15 +1,15 @@
+use std::borrow::Cow;
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use librqbit::{
-    AddTorrent, AddTorrentOptions, DhtSessionConfig, PeerConnectionOptions, Session,
-    SessionOptions,
+    AddTorrent, AddTorrentOptions, DhtSessionConfig, PeerConnectionOptions, Session, SessionOptions,
 };
-use nyaapi_rs::{Nyaa, NyaaMode, NyaaOptions, SearchOptions, SortBy, Order, CategoryFilter};
+use nyaapi_rs::{CategoryFilter, Nyaa, NyaaMode, NyaaOptions, Order, SearchOptions, SortBy};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    println!("[e2e] Step 1: Searching nyaa.si for a small popular torrent...");
+    println!("[e2e] Step 1: Searching nyaa.si for a popular torrent with seeders...");
 
     let nyaa = Nyaa::new(NyaaOptions {
         base_url: "https://nyaa.si".to_string(),
@@ -39,18 +39,21 @@ async fn main() -> anyhow::Result<()> {
         anyhow::bail!("no search results found");
     }
 
-    let torrent = &results.data[0];
+    // Find a torrent with seeders and a magnet link
+    let torrent = results
+        .data
+        .iter()
+        .find(|t| t.seeders > 10 && !t.magnet.is_empty())
+        .ok_or_else(|| anyhow::anyhow!("no torrent with seeders found"))?;
+
     println!("[e2e] Selected: {}", torrent.name);
     println!(
         "[e2e]   seeders={}, leechers={}, size={}",
         torrent.seeders, torrent.leechers, torrent.size
     );
-
-    let has_magnet = !torrent.magnet.is_empty();
-    let has_torrent_file = torrent.torrent_url.is_some();
     println!(
-        "[e2e]   magnet={}, torrent_file={}",
-        has_magnet, has_torrent_file
+        "[e2e]   magnet={}...",
+        &torrent.magnet[..torrent.magnet.len().min(100)]
     );
 
     println!("[e2e] Step 2: Creating librqbit session...");
@@ -79,22 +82,7 @@ async fn main() -> anyhow::Result<()> {
         .await?,
     );
 
-    // Prefer .torrent file download over magnet (faster, no DHT resolution needed)
-    let add_url = if let Some(ref torrent_url) = torrent.torrent_url {
-        let base = "https://nyaa.si";
-        let url = if torrent_url.starts_with('/') {
-            format!("{}{}", base, torrent_url)
-        } else {
-            torrent_url.clone()
-        };
-        println!("[e2e] Step 3: Downloading .torrent file from {}...", url);
-        url
-    } else if has_magnet {
-        println!("[e2e] Step 3: Using magnet link (DHT resolution will take time)...");
-        torrent.magnet.clone()
-    } else {
-        anyhow::bail!("no magnet or torrent file URL available");
-    };
+    println!("[e2e] Step 3: Adding torrent via magnet (DHT resolution)...");
 
     let opts = AddTorrentOptions {
         overwrite: true,
@@ -107,24 +95,35 @@ async fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
 
-    let resp = session
-        .add_torrent(
-            AddTorrent::Url(std::borrow::Cow::Owned(add_url)),
+    // Use a 60s timeout for add_torrent (DHT resolution)
+    let add_result = tokio::time::timeout(
+        std::time::Duration::from_secs(60),
+        session.add_torrent(
+            AddTorrent::Url(Cow::Owned(torrent.magnet.clone())),
             Some(opts),
-        )
-        .await?;
+        ),
+    )
+    .await;
 
-    let handle = match resp {
-        librqbit::AddTorrentResponse::Added(id, handle) => {
-            println!("[e2e] Torrent added with id={id}");
-            handle
+    let handle = match add_result {
+        Ok(Ok(resp)) => match resp {
+            librqbit::AddTorrentResponse::Added(id, handle) => {
+                println!("[e2e] Torrent added with id={id}");
+                handle
+            }
+            librqbit::AddTorrentResponse::AlreadyManaged(id, handle) => {
+                println!("[e2e] Torrent already managed with id={id}");
+                handle
+            }
+            librqbit::AddTorrentResponse::ListOnly(_) => {
+                anyhow::bail!("Got list-only response");
+            }
+        },
+        Ok(Err(e)) => {
+            anyhow::bail!("add_torrent failed: {e}");
         }
-        librqbit::AddTorrentResponse::AlreadyManaged(id, handle) => {
-            println!("[e2e] Torrent already managed with id={id}");
-            handle
-        }
-        librqbit::AddTorrentResponse::ListOnly(_) => {
-            anyhow::bail!("Got list-only response");
+        Err(_) => {
+            anyhow::bail!("add_torrent timed out after 60s (no peers found via DHT)");
         }
     };
 
@@ -136,9 +135,8 @@ async fn main() -> anyhow::Result<()> {
         stats.total_bytes, stats.state
     );
 
-    println!("[e2e] Step 4: Waiting for download to complete...");
+    println!("[e2e] Step 4: Waiting for download to complete (120s max)...");
 
-    // Use tokio timeout so the test doesn't hang forever
     match tokio::time::timeout(
         std::time::Duration::from_secs(120),
         handle.wait_until_completed(),
@@ -150,7 +148,7 @@ async fn main() -> anyhow::Result<()> {
             let stats = handle.stats();
             println!("[e2e] Total bytes: {}", stats.total_bytes);
             println!("[e2e] Progress bytes: {}", stats.progress_bytes);
-            println!("[e2e] Files downloaded to: {}", download_dir.display());
+            println!("[e2e] Files at: {}", download_dir.display());
         }
         Ok(Err(e)) => {
             println!("[e2e] Download error: {e}");
@@ -171,9 +169,7 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    // Cleanup
     let _ = std::fs::remove_dir_all(&download_dir);
-
     println!("[e2e] Test finished successfully!");
     Ok(())
 }
