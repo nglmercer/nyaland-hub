@@ -39,8 +39,7 @@ android {
                 jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86_64/*.so")
-                // 16KB page alignment
-                jniLibs.useLegacyPackaging = false
+                jniLibs.useLegacyPackaging = true
             }
         }
         getByName("release") {
@@ -51,8 +50,7 @@ android {
                     .toList().toTypedArray()
             )
             packaging {
-                // 16KB page alignment
-                jniLibs.useLegacyPackaging = false
+                jniLibs.useLegacyPackaging = true
             }
         }
     }

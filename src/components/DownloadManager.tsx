@@ -39,9 +39,16 @@ async function playFile(path: string) {
   const { invoke } = await import("@tauri-apps/api/core");
   try {
     const files: string[] = await invoke("detect_media_files", { path });
-    if (files.length > 0) {
-      await invoke("play_file", { path: files[0] });
+    if (files.length === 0) {
+      // Try recursive detection for nested torrent structures
+      const allFiles: string[] = await invoke("detect_media_files_recursive", { path });
+      if (allFiles.length > 0) {
+        await invoke("play_file", { path: allFiles[0] });
+      }
+      return;
     }
+
+    await invoke("play_file", { path: files[0] });
   } catch (e) {
     console.error("Play failed:", e);
   }

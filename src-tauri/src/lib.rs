@@ -36,6 +36,9 @@ pub fn run() {
                     commands::play_file,
                     commands::open_folder,
                     commands::detect_media_files,
+                    commands::detect_media_files_recursive,
+                    commands::play_file_android,
+                    commands::open_folder_android,
                 ])
                 .run(tauri::generate_context!())
                 .expect("error while running tauri application");

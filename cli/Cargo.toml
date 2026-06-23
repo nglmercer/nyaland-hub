@@ -1,0 +1,14 @@
+[package]
+name = "nyahub-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI tool for building NyaHub Android APK"
+
+[[bin]]
+name = "nyahub"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+colored = "2"
+anyhow = "1"

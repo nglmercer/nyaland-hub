@@ -1,4 +1,3 @@
-use std::process::Command as StdCommand;
 use tauri::State;
 
 use crate::nyaa::NyaaClient;
@@ -84,17 +83,25 @@ pub async fn save_settings(
 
 #[tauri::command]
 pub async fn play_file(path: String) -> Result<bool, String> {
+    let path_clone = path.clone();
     std::thread::spawn(move || {
-        let _ = StdCommand::new("mpv")
-            .args(["--no-terminal", "--keep-open", &path])
-            .spawn();
+        let result = open_file_with_system_app(&path_clone);
+        if let Err(e) = result {
+            eprintln!("Failed to open file: {}", e);
+        }
     });
     Ok(true)
 }
 
 #[tauri::command]
 pub async fn open_folder(path: String) -> Result<bool, String> {
-    opener::open(&path).map_err(|e| e.to_string())?;
+    let path_clone = path.clone();
+    std::thread::spawn(move || {
+        let result = open_folder_with_system_app(&path_clone);
+        if let Err(e) = result {
+            eprintln!("Failed to open folder: {}", e);
+        }
+    });
     Ok(true)
 }
 
@@ -116,4 +123,69 @@ pub async fn detect_media_files(path: String) -> Result<Vec<String>, String> {
 
     files.sort();
     Ok(files)
+}
+
+#[tauri::command]
+pub async fn detect_media_files_recursive(path: String) -> Result<Vec<String>, String> {
+    let media_exts = [
+        "mkv", "mp4", "avi", "webm", "mov", "flv", "wmv", "m4v", "ts", "rmvb",
+    ];
+    let mut files = Vec::new();
+
+    fn walk_dir(
+        dir: &std::path::Path,
+        media_exts: &[&str],
+        files: &mut Vec<String>,
+    ) -> Result<(), String> {
+        if dir.is_dir() {
+            for entry in std::fs::read_dir(dir).map_err(|e| e.to_string())? {
+                let entry = entry.map_err(|e| e.to_string())?;
+                let path = entry.path();
+                if path.is_dir() {
+                    walk_dir(&path, media_exts, files)?;
+                } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if media_exts.iter().any(|e| ext.eq_ignore_ascii_case(e)) {
+                        files.push(path.to_string_lossy().to_string());
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    let root = std::path::Path::new(&path);
+    walk_dir(root, &media_exts, &mut files)?;
+    files.sort();
+    Ok(files)
+}
+
+fn open_file_with_system_app(path: &str) -> Result<(), String> {
+    let path_obj = std::path::Path::new(path);
+    if !path_obj.exists() {
+        return Err(format!("File not found: {}", path));
+    }
+
+    // Use opener crate which handles all platforms (Linux, macOS, Windows, Android)
+    opener::open(path).map_err(|e| format!("Failed to open file: {}", e))
+}
+
+fn open_folder_with_system_app(path: &str) -> Result<(), String> {
+    let path_obj = std::path::Path::new(path);
+    if !path_obj.exists() {
+        return Err(format!("Folder not found: {}", path));
+    }
+
+    // Use opener crate which handles all platforms (Linux, macOS, Windows, Android)
+    opener::open(path).map_err(|e| format!("Failed to open folder: {}", e))
+}
+
+// Stub commands - Android commands are not needed when using opener crate
+#[tauri::command]
+pub async fn play_file_android(_path: String) -> Result<bool, String> {
+    Err("Not needed - use play_file instead".into())
+}
+
+#[tauri::command]
+pub async fn open_folder_android(_path: String) -> Result<bool, String> {
+    Err("Not needed - use open_folder instead".into())
 }

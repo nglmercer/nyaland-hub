@@ -10,7 +10,7 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.nyaland"
         android:usesCleartextTraffic="${usesCleartextTraffic}"
-        android:extractNativeLibs="false">
+        android:extractNativeLibs="true">
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
             android:launchMode="singleTask"
