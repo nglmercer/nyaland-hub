@@ -54,7 +54,6 @@ pub struct TorrentSession {
 impl TorrentSession {
     pub async fn new(settings: AppSettings) -> Self {
         let download_dir = if cfg!(target_os = "android") {
-            // Use app's internal files dir on Android (no permission needed)
             PathBuf::from("/data/user/0/com.nyaland.desktop/files/NyaHub")
         } else {
             PathBuf::from(&settings.save_path)
@@ -87,12 +86,45 @@ impl TorrentSession {
             ..Default::default()
         };
 
-        let session = Session::new_with_opts(download_dir.clone(), session_opts)
-            .await
-            .expect("Failed to create session");
+        let session = match Session::new_with_opts(download_dir.clone(), session_opts).await {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("Failed to create torrent session: {e}, using fallback");
+                Session::new(download_dir.clone())
+                    .await
+                    .expect("Failed to create fallback session")
+            }
+        };
 
         let api = Arc::new(Api::new(session, None));
 
+        let inner = Arc::new(RwLock::new(TorrentSessionInner {
+            downloads: HashMap::new(),
+            settings,
+        }));
+
+        Self { inner, api }
+    }
+
+    pub fn new_fallback() -> Self {
+        let rt = tokio::runtime::Runtime::new().expect("failed to create runtime for fallback");
+        let settings = AppSettings::default();
+        let download_dir = PathBuf::from("/data/user/0/com.nyaland.desktop/files/NyaHub");
+        std::fs::create_dir_all(&download_dir).ok();
+
+        let session = rt.block_on(async {
+            Session::new_with_opts(
+                download_dir.clone(),
+                SessionOptions {
+                    persistence: None,
+                    ..Default::default()
+                },
+            )
+            .await
+            .expect("Failed to create fallback session")
+        });
+
+        let api = Arc::new(Api::new(session, None));
         let inner = Arc::new(RwLock::new(TorrentSessionInner {
             downloads: HashMap::new(),
             settings,
