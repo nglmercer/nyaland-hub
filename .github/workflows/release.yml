@@ -61,55 +61,55 @@ jobs:
           path: artifacts/linux-x86_64/
           if-no-files-found: warn
 
-  build-linux-aarch64:
-    name: Build (Linux aarch64)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          submodules: recursive
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - name: Build in arm64 container
-        run: |
-          docker run --rm --platform linux/arm64 \
-            -v "${{ github.workspace }}:/project" \
-            -w /project \
-            -e CARGO_TERM_COLOR=always \
-            arm64v8/ubuntu:noble bash -c "
-              export DEBIAN_FRONTEND=noninteractive &&
-              apt-get update &&
-              apt-get install -y curl build-essential pkg-config \
-                libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
-                libgtk-3-dev patchelf xdg-utils npm &&
-              curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y &&
-              export PATH=\"/root/.cargo/bin:\$PATH\" &&
-              rustup target add aarch64-unknown-linux-gnu &&
-              cd /project &&
-              npm ci &&
-              npm run build &&
-              cd src-tauri &&
-              npx tauri build --target aarch64-unknown-linux-gnu --bundles deb -- --no-default-features
-            "
-
-      - name: Collect artifacts
-        run: |
-          BUNDLE_DIR=src-tauri/target/aarch64-unknown-linux-gnu/release/bundle
-          ARTIFACT_DIR=artifacts/linux-aarch64
-          mkdir -p "$ARTIFACT_DIR"
-          cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
-          find "$ARTIFACT_DIR" -type f
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v5
-        with:
-          name: release-linux-aarch64
-          path: artifacts/linux-aarch64/
-          if-no-files-found: warn
+  # build-linux-aarch64:
+  #   name: Build (Linux aarch64)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #       with:
+  #         submodules: recursive
+  #
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v3
+  #       with:
+  #         platforms: arm64
+  #
+  #     - name: Build in arm64 container
+  #       run: |
+  #         docker run --rm --platform linux/arm64 \
+  #           -v "${{ github.workspace }}:/project" \
+  #           -w /project \
+  #           -e CARGO_TERM_COLOR=always \
+  #           arm64v8/ubuntu:noble bash -c "
+  #             export DEBIAN_FRONTEND=noninteractive &&
+  #             apt-get update &&
+  #             apt-get install -y curl build-essential pkg-config \
+  #               libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
+  #               libgtk-3-dev patchelf xdg-utils npm &&
+  #             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y &&
+  #             export PATH=\"/root/.cargo/bin:\$PATH\" &&
+  #             rustup target add aarch64-unknown-linux-gnu &&
+  #             cd /project &&
+  #             npm ci &&
+  #             npm run build &&
+  #             cd src-tauri &&
+  #             npx tauri build --target aarch64-unknown-linux-gnu --bundles deb -- --no-default-features
+  #           "
+  #
+  #     - name: Collect artifacts
+  #       run: |
+  #         BUNDLE_DIR=src-tauri/target/aarch64-unknown-linux-gnu/release/bundle
+  #         ARTIFACT_DIR=artifacts/linux-aarch64
+  #         mkdir -p "$ARTIFACT_DIR"
+  #         cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
+  #         find "$ARTIFACT_DIR" -type f
+  #
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v5
+  #       with:
+  #         name: release-linux-aarch64
+  #         path: artifacts/linux-aarch64/
+  #         if-no-files-found: warn
 
   build-macos:
     name: Build (macOS ${{ matrix.arch }})
@@ -210,7 +210,7 @@ jobs:
 
   publish:
     name: Create GitHub Release
-    needs: [build-linux-x86_64, build-linux-aarch64, build-macos, build-windows]
+    needs: [build-linux-x86_64, build-macos, build-windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v5
