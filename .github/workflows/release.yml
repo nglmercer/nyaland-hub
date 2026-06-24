@@ -26,7 +26,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: .
 
       - uses: actions/setup-node@v5
         with:
@@ -48,7 +48,7 @@ jobs:
 
       - name: Collect artifacts
         run: |
-          BUNDLE_DIR=src-tauri/target/x86_64-unknown-linux-gnu/release/bundle
+          BUNDLE_DIR=target/x86_64-unknown-linux-gnu/release/bundle
           ARTIFACT_DIR=artifacts/linux-x86_64
           mkdir -p "$ARTIFACT_DIR"
           cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
@@ -98,7 +98,7 @@ jobs:
   #
   #     - name: Collect artifacts
   #       run: |
-  #         BUNDLE_DIR=src-tauri/target/aarch64-unknown-linux-gnu/release/bundle
+  #         BUNDLE_DIR=target/aarch64-unknown-linux-gnu/release/bundle
   #         ARTIFACT_DIR=artifacts/linux-aarch64
   #         mkdir -p "$ARTIFACT_DIR"
   #         cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
@@ -133,7 +133,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: .
 
       - uses: actions/setup-node@v5
         with:
@@ -150,7 +150,7 @@ jobs:
 
       - name: Collect artifacts
         run: |
-          BUNDLE_DIR=src-tauri/target/${{ matrix.rust_target }}/release/bundle
+          BUNDLE_DIR=target/${{ matrix.rust_target }}/release/bundle
           ARTIFACT_DIR=artifacts/macos-${{ matrix.arch }}
           mkdir -p "$ARTIFACT_DIR"
           cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
@@ -177,7 +177,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: .
 
       - uses: actions/setup-node@v5
         with:
@@ -195,7 +195,7 @@ jobs:
       - name: Collect artifacts
         shell: pwsh
         run: |
-          $bundleDir = "src-tauri/target/x86_64-pc-windows-msvc/release/bundle"
+          $bundleDir = "target/x86_64-pc-windows-msvc/release/bundle"
           $artifactDir = "artifacts/windows-x86_64"
           New-Item -ItemType Directory -Force -Path $artifactDir
           Copy-Item -Path "$bundleDir\*" -Destination $artifactDir -Recurse -Force -ErrorAction SilentlyContinue
