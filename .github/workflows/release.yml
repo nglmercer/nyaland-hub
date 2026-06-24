@@ -51,7 +51,7 @@ jobs:
           BUNDLE_DIR=target/x86_64-unknown-linux-gnu/release/bundle
           ARTIFACT_DIR=artifacts/linux-x86_64
           mkdir -p "$ARTIFACT_DIR"
-          cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
+          find "$BUNDLE_DIR" -maxdepth 2 -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) -exec cp {} "$ARTIFACT_DIR/" \;
           find "$ARTIFACT_DIR" -type f
 
       - name: Upload artifact
@@ -153,7 +153,7 @@ jobs:
           BUNDLE_DIR=target/${{ matrix.rust_target }}/release/bundle
           ARTIFACT_DIR=artifacts/macos-${{ matrix.arch }}
           mkdir -p "$ARTIFACT_DIR"
-          cp -r "$BUNDLE_DIR"/* "$ARTIFACT_DIR/" 2>/dev/null || true
+          find "$BUNDLE_DIR" -maxdepth 2 -type f \( -name "*.dmg" -o -name "*.app" \) -exec cp {} "$ARTIFACT_DIR/" \;
           find "$ARTIFACT_DIR" -type f
 
       - name: Upload artifact
@@ -198,8 +198,8 @@ jobs:
           $bundleDir = "target/x86_64-pc-windows-msvc/release/bundle"
           $artifactDir = "artifacts/windows-x86_64"
           New-Item -ItemType Directory -Force -Path $artifactDir
-          Copy-Item -Path "$bundleDir\*" -Destination $artifactDir -Recurse -Force -ErrorAction SilentlyContinue
-          Get-ChildItem -Path $artifactDir -Recurse -File | Select-Object -First 20
+          Get-ChildItem -Path $bundleDir -Recurse -File -Include "*.exe","*.msi","*.nsis" | Copy-Item -Destination $artifactDir -Force
+          Get-ChildItem -Path $artifactDir -Recurse -File
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
